@@ -1,3 +1,4 @@
+import 'package:delivery/login_page.dart';
 import 'package:flutter/material.dart';
 
 class SingUpPage extends StatefulWidget {
@@ -16,13 +17,13 @@ class _SingUpPageState extends State<SingUpPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: SingleChildScrollView(
+      body: Row(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
+        SingleChildScrollView(
             child: Column(
           // mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             const SizedBox(
-              height: 48,
+              height: 79,
             ),
             const SizedBox(
               width: 252,
@@ -185,12 +186,34 @@ class _SingUpPageState extends State<SingUpPage> {
               ),
             ),
             const SizedBox(
-              height: 27,
+              height: 47,
             ),
-            const Text('Login')
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text('Already have an account?'),
+                InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const LoginPage(),
+                      ),
+                    );
+                  },
+                  child: const Text(
+                    'Sign in',
+                    style: TextStyle(
+                      color: Colors.blue,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                )
+              ],
+            ),
           ],
         )),
-      ),
+      ]),
     );
   }
 }
