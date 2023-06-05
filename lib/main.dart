@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'signup_page.dart';
+
 void main() {
   runApp(const MyApp());
 }
@@ -82,7 +84,14 @@ class _MyHomePageState extends State<MyHomePage> {
               width: 220,
               height: 52,
               child: MaterialButton(
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const SingUpPage(),
+                    ),
+                  );
+                },
                 color: Colors.black,
                 child: const Text(
                   'Get Started',
