@@ -53,7 +53,7 @@ class _SingUpPageState extends State<SingUpPage> {
                           height: 10,
                         ),
                         SizedBox(
-                          width: 131,
+                          width: 140,
                           height: 48,
                           child: TextFormField(
                             decoration: _inputDecoration,
@@ -77,7 +77,7 @@ class _SingUpPageState extends State<SingUpPage> {
                           height: 10,
                         ),
                         SizedBox(
-                            width: 131,
+                            width: 140,
                             height: 48,
                             child: TextFormField(
                               decoration: _inputDecoration,
