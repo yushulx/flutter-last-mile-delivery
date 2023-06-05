@@ -1,14 +1,16 @@
 import 'package:delivery/login_page.dart';
 import 'package:flutter/material.dart';
 
-class SingUpPage extends StatefulWidget {
-  const SingUpPage({super.key});
+import 'id_scan_page.dart';
+
+class SignUpPage extends StatefulWidget {
+  const SignUpPage({super.key});
 
   @override
-  State<SingUpPage> createState() => _SingUpPageState();
+  State<SignUpPage> createState() => _SignUpPageState();
 }
 
-class _SingUpPageState extends State<SingUpPage> {
+class _SignUpPageState extends State<SignUpPage> {
   final _inputDecoration = const InputDecoration(
     filled: true,
     border: OutlineInputBorder(),
@@ -172,7 +174,7 @@ class _SingUpPageState extends State<SingUpPage> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const SingUpPage(),
+                      builder: (context) => const IdScanPage(),
                     ),
                   );
                 },
