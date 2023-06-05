@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 
-import 'final_page.dart';
-
-class SuccessPage extends StatefulWidget {
-  const SuccessPage({super.key});
+class FinalPage extends StatefulWidget {
+  const FinalPage({super.key});
 
   @override
-  State<SuccessPage> createState() => _SuccessPageState();
+  State<FinalPage> createState() => _FinalPageState();
 }
 
-class _SuccessPageState extends State<SuccessPage> {
+class _FinalPageState extends State<FinalPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -21,14 +19,14 @@ class _SuccessPageState extends State<SuccessPage> {
                 width: 200,
                 height: 280,
                 child: Image.asset(
-                  'images/icon-successful.png',
+                  'images/icon-confirmed.png',
                   fit: BoxFit.contain,
                 )),
             const SizedBox(
-              width: 200,
-              height: 85,
+              width: 298,
+              height: 45,
               child: Text(
-                'Successful Identification',
+                'Delivery Confirmed!',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Colors.black,
@@ -44,7 +42,7 @@ class _SuccessPageState extends State<SuccessPage> {
               width: 284,
               height: 48,
               child: Text(
-                'You have successfully verified your identity. Please log in to continue.',
+                'You have successfully confirmed the delivery. Thank you!',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Colors.black,
@@ -61,16 +59,16 @@ class _SuccessPageState extends State<SuccessPage> {
               height: 52,
               child: MaterialButton(
                 onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const FinalPage(),
-                    ),
-                  );
+                  // Navigator.push(
+                  //   context,
+                  //   MaterialPageRoute(
+                  //     builder: (context) => const SignUpPage(),
+                  //   ),
+                  // );
                 },
                 color: Colors.black,
                 child: const Text(
-                  'Start to Deliver',
+                  'Back to Orders',
                   style: TextStyle(
                     color: Colors.white,
                   ),
