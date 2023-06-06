@@ -6,3 +6,6 @@ A Flutter project demonstrating how to implement an app prototype of last mile d
 - [flutter_barcode_sdk](https://pub.dev/packages/flutter_barcode_sdk)
 - [flutter_ocr_sdk](https://pub.dev/packages/flutter_ocr_sdk)
 - [flutter_document_scan_sdk](https://pub.dev/packages/flutter_document_scan_sdk)
+
+## Try Online Demo
+https://yushulx.me/flutter-last-mile-delivery/
