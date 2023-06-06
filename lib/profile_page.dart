@@ -25,8 +25,7 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
       ),
       body: Row(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
-        SingleChildScrollView(
-            child: Column(
+        Column(
           children: <Widget>[
             const SizedBox(
               height: 14,
@@ -140,8 +139,77 @@ class _ProfilePageState extends State<ProfilePage> {
                 ],
               ),
             ),
+            const SizedBox(
+              height: 5,
+            ),
+            Expanded(
+              child: Container(
+                width: screenWidth,
+                // height: 418,
+                decoration: const BoxDecoration(
+                  color: Color(0xffEF8888),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: <Widget>[
+                    const SizedBox(
+                      height: 67,
+                    ),
+                    const SizedBox(
+                      width: 307,
+                      height: 99,
+                      child: Text(
+                        '''You're just one step away from completing your sign-up. For identity verification, kindly upload a clear copy of either your passport or driver's license.''',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(
+                      height: 50,
+                    ),
+                    SizedBox(
+                      width: 240,
+                      height: 52,
+                      child: MaterialButton(
+                        color: Colors.black,
+                        onPressed: () {},
+                        child: const Text(
+                          'Scan Identity Documents',
+                          style: TextStyle(
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            SizedBox(
+              width: screenWidth,
+              height: 48,
+              child: MaterialButton(
+                onPressed: () {
+                  // Navigator.push(
+                  //   context,
+                  //   MaterialPageRoute(
+                  //     builder: (context) => const SignUpPage(),
+                  //   ),
+                  // );
+                },
+                color: const Color(0xffECECEC),
+                child: const Text(
+                  'Log out',
+                  style: TextStyle(
+                    color: Colors.black,
+                  ),
+                ),
+              ),
+            ),
           ],
-        )),
+        )
       ]),
     );
   }
