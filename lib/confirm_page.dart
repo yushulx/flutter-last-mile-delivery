@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 
 import 'success_page.dart';
 
-class InfoPage extends StatefulWidget {
-  const InfoPage({super.key});
+class ConfirmPage extends StatefulWidget {
+  const ConfirmPage({super.key});
 
   @override
-  State<InfoPage> createState() => _InfoPageState();
+  State<ConfirmPage> createState() => _ConfirmPageState();
 }
 
-class _InfoPageState extends State<InfoPage> {
+class _ConfirmPageState extends State<ConfirmPage> {
   final _inputDecoration = const InputDecoration(
     filled: true,
     border: OutlineInputBorder(),

@@ -1,3 +1,4 @@
+import 'package:delivery/order_page.dart';
 import 'package:delivery/profile_page.dart';
 import 'package:flutter/material.dart';
 
@@ -63,7 +64,7 @@ class _FinalPageState extends State<FinalPage> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const ProfilePage(),
+                      builder: (context) => const OrderPage(),
                     ),
                   );
                 },

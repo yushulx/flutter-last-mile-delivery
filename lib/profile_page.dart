@@ -1,3 +1,4 @@
+import 'package:delivery/id_scan_page.dart';
 import 'package:flutter/material.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -9,7 +10,7 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   bool _isVerified = false;
-  double _screenWidth = 0, _screenHeight = 0;
+  double _screenWidth = 0;
 
   Widget verifyStatus() {
     if (_isVerified) {
@@ -62,6 +63,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 child: Text(
                   '''You're just one step away from completing your sign-up. For identity verification, kindly upload a clear copy of either your passport or driver's license.''',
                   style: TextStyle(
+                    color: Colors.white,
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
@@ -75,7 +77,14 @@ class _ProfilePageState extends State<ProfilePage> {
                 height: 52,
                 child: MaterialButton(
                   color: Colors.black,
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const IdScanPage(),
+                      ),
+                    );
+                  },
                   child: const Text(
                     'Scan Identity Documents',
                     style: TextStyle(
@@ -94,7 +103,6 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     _screenWidth = MediaQuery.of(context).size.width;
-    _screenHeight = MediaQuery.of(context).size.height;
     return Scaffold(
         appBar: AppBar(
           backgroundColor: Colors.black,
@@ -122,15 +130,16 @@ class _ProfilePageState extends State<ProfilePage> {
                   color: const Color(0xffF5F5F5),
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: const Row(
+                child: Row(
                   children: <Widget>[
-                    SizedBox(width: 22),
-                    CircleAvatar(
-                      backgroundImage: AssetImage('images/icon-user.png'),
-                      radius: 20,
+                    const SizedBox(width: 22),
+                    Image.asset(
+                      "images/icon-user.png",
+                      width: 67,
+                      height: 67,
                     ),
-                    SizedBox(width: 22),
-                    Column(
+                    const SizedBox(width: 22),
+                    const Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: <Widget>[
@@ -140,6 +149,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           child: Text(
                             'Jane Doe',
                             style: TextStyle(
+                              color: Color(0xff323234),
                               fontSize: 22,
                               fontWeight: FontWeight.bold,
                             ),
@@ -151,8 +161,9 @@ class _ProfilePageState extends State<ProfilePage> {
                           child: Text(
                             'abc@gmail.com',
                             style: TextStyle(
+                              color: Color(0xff323234),
                               fontSize: 22,
-                              color: Colors.grey,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
@@ -253,7 +264,9 @@ class _ProfilePageState extends State<ProfilePage> {
                   child: const Text(
                     'Log out',
                     style: TextStyle(
+                      fontSize: 20,
                       color: Colors.black,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),

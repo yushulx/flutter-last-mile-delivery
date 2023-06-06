@@ -70,6 +70,7 @@ flutter:
     - images/icon-time.png
     - images/icon-address.png
     - images/icon-profile.png
+    - images/icon-arrow.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

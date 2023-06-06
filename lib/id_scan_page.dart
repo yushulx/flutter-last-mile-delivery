@@ -1,3 +1,4 @@
+import 'package:delivery/confirm_page.dart';
 import 'package:flutter/material.dart';
 
 class IdScanPage extends StatefulWidget {
@@ -179,6 +180,17 @@ class _IdScanPageState extends State<IdScanPage> {
         children: <Widget>[
           Positioned(bottom: 0, child: getButtons()),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        child: const Icon(Icons.done),
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const ConfirmPage(),
+            ),
+          );
+        },
       ),
     );
   }

@@ -1,4 +1,5 @@
 import 'package:delivery/login_page.dart';
+import 'package:delivery/profile_page.dart';
 import 'package:flutter/material.dart';
 
 import 'id_scan_page.dart';
@@ -174,7 +175,7 @@ class _SignUpPageState extends State<SignUpPage> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const IdScanPage(),
+                      builder: (context) => const ProfilePage(),
                     ),
                   );
                 },
@@ -206,7 +207,7 @@ class _SignUpPageState extends State<SignUpPage> {
                   child: const Text(
                     'Sign in',
                     style: TextStyle(
-                      color: Colors.blue,
+                      color: Color(0xffFE8E14),
                       decoration: TextDecoration.underline,
                     ),
                   ),

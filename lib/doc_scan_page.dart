@@ -1,3 +1,4 @@
+import 'package:delivery/delivery_page.dart';
 import 'package:flutter/material.dart';
 
 class DocScanPage extends StatefulWidget {
@@ -23,10 +24,16 @@ class _DocScanPageState extends State<DocScanPage> {
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
-      body: const Stack(
-        children: <Widget>[
-          Positioned(bottom: 0, child: Text('Scan Delivery Document')),
-        ],
+      floatingActionButton: FloatingActionButton(
+        child: const Icon(Icons.done),
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const DeliveryPage(),
+            ),
+          );
+        },
       ),
     );
   }

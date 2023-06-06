@@ -1,3 +1,4 @@
+import 'package:delivery/order_page.dart';
 import 'package:flutter/material.dart';
 
 import 'final_page.dart';
@@ -64,7 +65,7 @@ class _SuccessPageState extends State<SuccessPage> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const FinalPage(),
+                      builder: (context) => const OrderPage(),
                     ),
                   );
                 },
