@@ -1,3 +1,4 @@
+import 'package:delivery/router_manager.dart';
 import 'package:flutter/material.dart';
 
 import 'order_page.dart';
@@ -120,11 +121,12 @@ class _LoginPageState extends State<LoginPage> {
                 height: 52,
                 child: MaterialButton(
                   onPressed: () {
+                    MaterialPageRoute route = MaterialPageRoute(
+                        builder: (context) => const OrderPage());
+                    routes.add(route);
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
-                        builder: (context) => const OrderPage(),
-                      ),
+                      route,
                     );
                   },
                   color: Colors.black,

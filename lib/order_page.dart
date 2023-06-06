@@ -1,5 +1,6 @@
 import 'package:delivery/barcode_scan_page.dart';
 import 'package:delivery/profile_page.dart';
+import 'package:delivery/router_manager.dart';
 import 'package:flutter/material.dart';
 
 import 'data/order_data.dart';
@@ -47,22 +48,26 @@ class _OrderPageState extends State<OrderPage> {
             height: 24,
           ),
           onPressed: () {
+            MaterialPageRoute route = MaterialPageRoute(
+              builder: (context) => const ProfilePage(),
+            );
+            routes.add(route);
             Navigator.push(
               context,
-              MaterialPageRoute(
-                builder: (context) => const ProfilePage(),
-              ),
+              route,
             );
           },
         ),
         actions: [
           IconButton(
             onPressed: () {
+              MaterialPageRoute route = MaterialPageRoute(
+                builder: (context) => const BarcodeScanPage(),
+              );
+              routes.add(route);
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (context) => const BarcodeScanPage(),
-                ),
+                route,
               );
             },
             icon: Image.asset(

@@ -3,6 +3,7 @@ import 'package:delivery/final_page.dart';
 import 'package:flutter/material.dart';
 
 import 'data/order_data.dart';
+import 'router_manager.dart';
 
 class DeliveryPage extends StatefulWidget {
   const DeliveryPage({super.key});
@@ -31,7 +32,10 @@ class _DeliveryPageState extends State<DeliveryPage> {
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () {
+            routes.removeLast();
+            Navigator.of(context).pop();
+          },
         ),
       ),
       body: Column(
@@ -149,11 +153,13 @@ class _DeliveryPageState extends State<DeliveryPage> {
                     child: MaterialButton(
                       color: Colors.black,
                       onPressed: () {
+                        MaterialPageRoute route = MaterialPageRoute(
+                          builder: (context) => const DocScanPage(),
+                        );
+                        routes.add(route);
                         Navigator.push(
                           context,
-                          MaterialPageRoute(
-                            builder: (context) => const DocScanPage(),
-                          ),
+                          route,
                         );
                       },
                       child: const Text(
@@ -170,11 +176,13 @@ class _DeliveryPageState extends State<DeliveryPage> {
           ),
           GestureDetector(
               onTap: () {
+                MaterialPageRoute route = MaterialPageRoute(
+                  builder: (context) => const FinalPage(),
+                );
+                routes.add(route);
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => const FinalPage(),
-                  ),
+                  route,
                 );
               },
               child: SizedBox(

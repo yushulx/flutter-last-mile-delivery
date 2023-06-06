@@ -1,3 +1,4 @@
+import 'package:delivery/router_manager.dart';
 import 'package:flutter/material.dart';
 
 import 'signup_page.dart';
@@ -66,11 +67,12 @@ class _MyHomePageState extends State<MyHomePage> {
               height: 52,
               child: MaterialButton(
                 onPressed: () {
+                  MaterialPageRoute route = MaterialPageRoute(
+                      builder: (context) => const SignUpPage());
+                  routes.add(route);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => const SignUpPage(),
-                    ),
+                    route,
                   );
                 },
                 color: Colors.black,

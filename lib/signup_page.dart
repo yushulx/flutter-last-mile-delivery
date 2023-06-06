@@ -2,7 +2,7 @@ import 'package:delivery/login_page.dart';
 import 'package:delivery/profile_page.dart';
 import 'package:flutter/material.dart';
 
-import 'id_scan_page.dart';
+import 'router_manager.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -172,11 +172,12 @@ class _SignUpPageState extends State<SignUpPage> {
               height: 52,
               child: MaterialButton(
                 onPressed: () {
+                  MaterialPageRoute route = MaterialPageRoute(
+                      builder: (context) => const ProfilePage());
+                  routes.add(route);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => const ProfilePage(),
-                    ),
+                    route,
                   );
                 },
                 color: Colors.black,
@@ -197,11 +198,13 @@ class _SignUpPageState extends State<SignUpPage> {
                 const Text('Already have an account? '),
                 InkWell(
                   onTap: () {
+                    MaterialPageRoute route = MaterialPageRoute(
+                      builder: (context) => const LoginPage(),
+                    );
+                    routes.add(route);
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
-                        builder: (context) => const LoginPage(),
-                      ),
+                      route,
                     );
                   },
                   child: const Text(

@@ -1,5 +1,5 @@
 import 'package:delivery/order_page.dart';
-import 'package:delivery/profile_page.dart';
+import 'package:delivery/router_manager.dart';
 import 'package:flutter/material.dart';
 
 class FinalPage extends StatefulWidget {
@@ -61,12 +61,20 @@ class _FinalPageState extends State<FinalPage> {
               height: 52,
               child: MaterialButton(
                 onPressed: () {
+                  MaterialPageRoute route = MaterialPageRoute(
+                    builder: (context) => const OrderPage(),
+                  );
+
+                  routes.add(route);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => const OrderPage(),
-                    ),
+                    route,
                   );
+
+                  while (routes.length != 1) {
+                    Navigator.removeRoute(context, routes[0]);
+                    routes.removeAt(0);
+                  }
                 },
                 color: Colors.black,
                 child: const Text(

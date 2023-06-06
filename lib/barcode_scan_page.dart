@@ -1,6 +1,8 @@
 import 'package:delivery/delivery_page.dart';
 import 'package:flutter/material.dart';
 
+import 'router_manager.dart';
+
 class BarcodeScanPage extends StatefulWidget {
   const BarcodeScanPage({super.key});
 
@@ -21,17 +23,23 @@ class _BarcodeScanPageState extends State<BarcodeScanPage> {
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () {
+            routes.removeLast();
+            Navigator.of(context).pop();
+          },
         ),
       ),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.done),
         onPressed: () {
+          MaterialPageRoute route = MaterialPageRoute(
+            builder: (context) => const DeliveryPage(),
+          );
+
+          routes.add(route);
           Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (context) => const DeliveryPage(),
-            ),
+            route,
           );
         },
       ),

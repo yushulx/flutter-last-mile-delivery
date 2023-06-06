@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'router_manager.dart';
 import 'success_page.dart';
 
 class ConfirmPage extends StatefulWidget {
@@ -27,7 +28,10 @@ class _ConfirmPageState extends State<ConfirmPage> {
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () {
+            routes.removeLast();
+            Navigator.of(context).pop();
+          },
         ),
       ),
       body: Row(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
@@ -139,11 +143,13 @@ class _ConfirmPageState extends State<ConfirmPage> {
               height: 52,
               child: MaterialButton(
                 onPressed: () {
+                  MaterialPageRoute route = MaterialPageRoute(
+                    builder: (context) => const SuccessPage(),
+                  );
+                  routes.add(route);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => const SuccessPage(),
-                    ),
+                    route,
                   );
                 },
                 color: Colors.black,

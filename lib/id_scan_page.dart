@@ -1,6 +1,8 @@
 import 'package:delivery/confirm_page.dart';
 import 'package:flutter/material.dart';
 
+import 'router_manager.dart';
+
 class IdScanPage extends StatefulWidget {
   const IdScanPage({super.key});
 
@@ -173,7 +175,10 @@ class _IdScanPageState extends State<IdScanPage> {
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () {
+            routes.removeLast();
+            Navigator.of(context).pop();
+          },
         ),
       ),
       body: Stack(
@@ -184,11 +189,13 @@ class _IdScanPageState extends State<IdScanPage> {
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.done),
         onPressed: () {
+          MaterialPageRoute route = MaterialPageRoute(
+            builder: (context) => const ConfirmPage(),
+          );
+          routes.add(route);
           Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (context) => const ConfirmPage(),
-            ),
+            route,
           );
         },
       ),

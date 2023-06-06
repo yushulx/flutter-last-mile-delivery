@@ -1,7 +1,7 @@
 import 'package:delivery/order_page.dart';
 import 'package:flutter/material.dart';
 
-import 'final_page.dart';
+import 'router_manager.dart';
 
 class SuccessPage extends StatefulWidget {
   const SuccessPage({super.key});
@@ -62,11 +62,13 @@ class _SuccessPageState extends State<SuccessPage> {
               height: 52,
               child: MaterialButton(
                 onPressed: () {
+                  MaterialPageRoute route = MaterialPageRoute(
+                    builder: (context) => const OrderPage(),
+                  );
+                  routes.add(route);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => const OrderPage(),
-                    ),
+                    route,
                   );
                 },
                 color: Colors.black,

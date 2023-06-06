@@ -1,4 +1,5 @@
 import 'package:delivery/id_scan_page.dart';
+import 'package:delivery/router_manager.dart';
 import 'package:flutter/material.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -78,11 +79,12 @@ class _ProfilePageState extends State<ProfilePage> {
                 child: MaterialButton(
                   color: Colors.black,
                   onPressed: () {
+                    MaterialPageRoute route = MaterialPageRoute(
+                        builder: (context) => const IdScanPage());
+                    routes.add(route);
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
-                        builder: (context) => const IdScanPage(),
-                      ),
+                      route,
                     );
                   },
                   child: const Text(
@@ -113,7 +115,10 @@ class _ProfilePageState extends State<ProfilePage> {
           centerTitle: true,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back, color: Colors.white),
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () {
+              routes.removeLast();
+              Navigator.of(context).pop();
+            },
           ),
         ),
         body:
