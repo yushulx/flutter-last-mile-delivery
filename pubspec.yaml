@@ -63,6 +63,13 @@ flutter:
     - images/icon-successful.png
     - images/icon-man.png
     - images/icon-confirmed.png
+    - images/icon-user.png
+    - images/icon-edit.png
+    - images/icon-group.png
+    - images/icon-scan-barcode.png
+    - images/icon-time.png
+    - images/icon-address.png
+    - images/icon-profile.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

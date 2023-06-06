@@ -1,3 +1,4 @@
+import 'package:delivery/profile_page.dart';
 import 'package:flutter/material.dart';
 
 class FinalPage extends StatefulWidget {
@@ -55,20 +56,20 @@ class _FinalPageState extends State<FinalPage> {
               height: 47,
             ),
             SizedBox(
-              width: 220,
+              width: 280,
               height: 52,
               child: MaterialButton(
                 onPressed: () {
-                  // Navigator.push(
-                  //   context,
-                  //   MaterialPageRoute(
-                  //     builder: (context) => const SignUpPage(),
-                  //   ),
-                  // );
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ProfilePage(),
+                    ),
+                  );
                 },
                 color: Colors.black,
                 child: const Text(
-                  'Back to Orders',
+                  'Back to Assignment List',
                   style: TextStyle(
                     color: Colors.white,
                   ),

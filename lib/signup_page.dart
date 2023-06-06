@@ -31,7 +31,7 @@ class _SignUpPageState extends State<SignUpPage> {
               width: 252,
               height: 90,
               child: Text(
-                'Start Your Delivery Journey',
+                'Register as a Delivery Driver',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Colors.black,
@@ -188,7 +188,7 @@ class _SignUpPageState extends State<SignUpPage> {
               ),
             ),
             const SizedBox(
-              height: 47,
+              height: 100,
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,

@@ -1,4 +1,3 @@
-import 'package:delivery/login_page.dart';
 import 'package:flutter/material.dart';
 
 import 'success_page.dart';
@@ -22,7 +21,7 @@ class _InfoPageState extends State<InfoPage> {
       appBar: AppBar(
         backgroundColor: Colors.black,
         title: const Text(
-          'Identification Info',
+          'Confirm Identification Info',
           style: TextStyle(color: Colors.white),
         ),
         centerTitle: true,
@@ -149,7 +148,7 @@ class _InfoPageState extends State<InfoPage> {
                 },
                 color: Colors.black,
                 child: const Text(
-                  'Submit',
+                  'Confirm',
                   style: TextStyle(
                     color: Colors.white,
                   ),

@@ -1,16 +1,8 @@
-# delivery
+# App Prototype: Last Mile Delivery 
 
-A new Flutter project.
+A Flutter project demonstrating how to implement an app prototype of last mile delivery using [Dynamsoft Barcode Reader](https://www.dynamsoft.com/barcode-reader/overview/), [Dyanmsoft Label Recognizer](https://www.dynamsoft.com/label-recognition/overview/) and [Dynamsoft Document Normalizer]().
 
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Dependencies
+- [flutter_barcode_sdk](https://pub.dev/packages/flutter_barcode_sdk)
+- [flutter_ocr_sdk](https://pub.dev/packages/flutter_ocr_sdk)
+- [flutter_document_scan_sdk](https://pub.dev/packages/flutter_document_scan_sdk)
