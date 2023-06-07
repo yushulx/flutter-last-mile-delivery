@@ -127,7 +127,7 @@ class _IdScanPageState extends State<IdScanPage> with WidgetsBindingObserver {
           if (results.isNotEmpty) {
             Map<String, String>? map = parseLicense(results[0].text);
             if (map != null) {
-              _controller!.stopImageStream();
+              stopVideo();
               MaterialPageRoute route = MaterialPageRoute(
                 builder: (context) => const ConfirmPage(),
               );
@@ -135,10 +135,8 @@ class _IdScanPageState extends State<IdScanPage> with WidgetsBindingObserver {
               Navigator.push(
                 context,
                 route,
-              ).then((value) => startVideo());
+              ).then((value) => initCamera());
             }
-          } else {
-            _isScanAvailable = true;
           }
 
           _isScanAvailable = true;
@@ -166,6 +164,18 @@ class _IdScanPageState extends State<IdScanPage> with WidgetsBindingObserver {
           setState(() {
             _mrzLines = results;
           });
+
+          if (results.isNotEmpty) {
+            stopVideo();
+            MaterialPageRoute route = MaterialPageRoute(
+              builder: (context) => const ConfirmPage(),
+            );
+            routes.add(route);
+            Navigator.push(
+              context,
+              route,
+            ).then((value) => initCamera());
+          }
 
           _isScanAvailable = true;
         });
