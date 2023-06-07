@@ -1,7 +1,7 @@
 import 'package:delivery/confirm_page.dart';
 import 'package:flutter/material.dart';
 
-import 'router_manager.dart';
+import 'global.dart';
 
 class IdScanPage extends StatefulWidget {
   const IdScanPage({super.key});
@@ -165,40 +165,45 @@ class _IdScanPageState extends State<IdScanPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        title: const Text(
-          'Scan Identity Documents',
-          style: TextStyle(color: Colors.white),
-        ),
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () {
-            routes.removeLast();
-            Navigator.of(context).pop();
-          },
-        ),
-      ),
-      body: Stack(
-        children: <Widget>[
-          Positioned(bottom: 0, child: getButtons()),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        child: const Icon(Icons.done),
-        onPressed: () {
-          MaterialPageRoute route = MaterialPageRoute(
-            builder: (context) => const ConfirmPage(),
-          );
-          routes.add(route);
-          Navigator.push(
-            context,
-            route,
-          );
+    return WillPopScope(
+        onWillPop: () async {
+          routes.removeLast();
+          return true;
         },
-      ),
-    );
+        child: Scaffold(
+          appBar: AppBar(
+            backgroundColor: Colors.black,
+            title: const Text(
+              'Scan Identity Documents',
+              style: TextStyle(color: Colors.white),
+            ),
+            centerTitle: true,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              onPressed: () {
+                routes.removeLast();
+                Navigator.of(context).pop();
+              },
+            ),
+          ),
+          body: Stack(
+            children: <Widget>[
+              Positioned(bottom: 0, child: getButtons()),
+            ],
+          ),
+          floatingActionButton: FloatingActionButton(
+            child: const Icon(Icons.done),
+            onPressed: () {
+              MaterialPageRoute route = MaterialPageRoute(
+                builder: (context) => const ConfirmPage(),
+              );
+              routes.add(route);
+              Navigator.push(
+                context,
+                route,
+              );
+            },
+          ),
+        ));
   }
 }

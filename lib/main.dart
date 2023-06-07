@@ -1,7 +1,11 @@
-import 'package:delivery/router_manager.dart';
+import 'package:delivery/data/profile_data.dart';
+import 'package:delivery/order_page.dart';
+import 'package:delivery/profile_page.dart';
+import 'package:delivery/global.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-import 'signup_page.dart';
+import 'home_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -12,80 +16,43 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       title: 'Last Mile Delivery',
-      home: MyHomePage(title: 'Flutter Demo Home Page'),
-    );
-  }
-}
+      home: FutureBuilder<SharedPreferences>(
+        future: SharedPreferences.getInstance(),
+        builder:
+            (BuildContext context, AsyncSnapshot<SharedPreferences> snapshot) {
+          if (!snapshot.hasData) {
+            return const CircularProgressIndicator(); // Loading indicator
+          }
+          final String email = snapshot.data!.getString('email') ?? '';
+          final bool verified = snapshot.data!.getBool('verified') ?? false;
+          Future.microtask(() {
+            MaterialPageRoute route;
+            data = ProfileData(
+                email: email,
+                firstName: snapshot.data!.getString('firstName') ?? '',
+                lastName: snapshot.data!.getString('lastName') ?? '',
+                password: snapshot.data!.getString('password') ?? '',
+                verified: snapshot.data!.getBool('verified') ?? false);
+            if (verified) {
+              route =
+                  MaterialPageRoute(builder: (context) => const OrderPage());
+            } else {
+              if (email.isEmpty) {
+                route =
+                    MaterialPageRoute(builder: (context) => const MyHomePage());
+              } else {
+                route = MaterialPageRoute(
+                    builder: (context) => const ProfilePage());
+              }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            SizedBox(
-                width: 200,
-                height: 280,
-                child: Image.asset(
-                  'images/icon-man.png',
-                  fit: BoxFit.contain,
-                )),
-            const SizedBox(
-              height: 47,
-            ),
-            const SizedBox(
-              width: 269,
-              height: 60,
-              child: Text(
-                'Last Mile Delivery',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.black,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            const SizedBox(
-              height: 47,
-            ),
-            SizedBox(
-              width: 220,
-              height: 52,
-              child: MaterialButton(
-                onPressed: () {
-                  MaterialPageRoute route = MaterialPageRoute(
-                      builder: (context) => const SignUpPage());
-                  routes.add(route);
-                  Navigator.push(
-                    context,
-                    route,
-                  );
-                },
-                color: Colors.black,
-                child: const Text(
-                  'Get Started',
-                  style: TextStyle(
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
+              routes.add(route);
+              Navigator.pushReplacement(context, route);
+            }
+          });
+          return Container();
+        },
       ),
     );
   }

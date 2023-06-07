@@ -1,6 +1,6 @@
 import 'package:delivery/barcode_scan_page.dart';
 import 'package:delivery/profile_page.dart';
-import 'package:delivery/router_manager.dart';
+import 'package:delivery/global.dart';
 import 'package:flutter/material.dart';
 
 import 'data/order_data.dart';
@@ -33,55 +33,60 @@ class _OrderPageState extends State<OrderPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        title: const Text(
-          'Assigned to Me',
-          style: TextStyle(color: Colors.white),
-        ),
-        centerTitle: true,
-        leading: IconButton(
-          icon: Image.asset(
-            "images/icon-profile.png",
-            width: 24,
-            height: 24,
-          ),
-          onPressed: () {
-            MaterialPageRoute route = MaterialPageRoute(
-              builder: (context) => const ProfilePage(),
-            );
-            routes.add(route);
-            Navigator.push(
-              context,
-              route,
-            );
-          },
-        ),
-        actions: [
-          IconButton(
-            onPressed: () {
-              MaterialPageRoute route = MaterialPageRoute(
-                builder: (context) => const BarcodeScanPage(),
-              );
-              routes.add(route);
-              Navigator.push(
-                context,
-                route,
-              );
-            },
-            icon: Image.asset(
-              "images/icon-scan-barcode.png",
+    return WillPopScope(
+        onWillPop: () async {
+          routes.removeLast();
+          return true;
+        },
+        child: Scaffold(
+          appBar: AppBar(
+            backgroundColor: Colors.black,
+            title: const Text(
+              'Assigned to Me',
+              style: TextStyle(color: Colors.white),
             ),
-          )
-        ],
-      ),
-      body: ListView.builder(
-          itemCount: orders.length,
-          itemBuilder: (context, index) {
-            return MyCustomWidget(order: orders[index]);
-          }),
-    );
+            centerTitle: true,
+            leading: IconButton(
+              icon: Image.asset(
+                "images/icon-profile.png",
+                width: 24,
+                height: 24,
+              ),
+              onPressed: () {
+                MaterialPageRoute route = MaterialPageRoute(
+                  builder: (context) => const ProfilePage(),
+                );
+                routes.add(route);
+                Navigator.push(
+                  context,
+                  route,
+                );
+              },
+            ),
+            actions: [
+              IconButton(
+                onPressed: () {
+                  MaterialPageRoute route = MaterialPageRoute(
+                    builder: (context) => const BarcodeScanPage(),
+                  );
+                  routes.add(route);
+                  Navigator.push(
+                    context,
+                    route,
+                  );
+                },
+                icon: Image.asset(
+                  "images/icon-scan-barcode.png",
+                ),
+              )
+            ],
+          ),
+          body: ListView.builder(
+              itemCount: orders.length,
+              itemBuilder: (context, index) {
+                return MyCustomWidget(order: orders[index]);
+              }),
+        ));
   }
 }
 

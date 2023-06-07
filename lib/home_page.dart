@@ -1,15 +1,16 @@
-import 'package:delivery/order_page.dart';
 import 'package:delivery/global.dart';
 import 'package:flutter/material.dart';
 
-class FinalPage extends StatefulWidget {
-  const FinalPage({super.key});
+import 'signup_page.dart';
+
+class MyHomePage extends StatefulWidget {
+  const MyHomePage({super.key});
 
   @override
-  State<FinalPage> createState() => _FinalPageState();
+  State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _FinalPageState extends State<FinalPage> {
+class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -26,14 +27,17 @@ class _FinalPageState extends State<FinalPage> {
                     width: 200,
                     height: 280,
                     child: Image.asset(
-                      'images/icon-confirmed.png',
+                      'images/icon-man.png',
                       fit: BoxFit.contain,
                     )),
                 const SizedBox(
-                  width: 298,
-                  height: 45,
+                  height: 47,
+                ),
+                const SizedBox(
+                  width: 269,
+                  height: 60,
                   child: Text(
-                    'Delivery Confirmed!',
+                    'Last Mile Delivery',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Colors.black,
@@ -43,51 +47,24 @@ class _FinalPageState extends State<FinalPage> {
                   ),
                 ),
                 const SizedBox(
-                  height: 10,
-                ),
-                const SizedBox(
-                  width: 284,
-                  height: 48,
-                  child: Text(
-                    'You have successfully confirmed the delivery. Thank you!',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                const SizedBox(
                   height: 47,
                 ),
                 SizedBox(
-                  width: 280,
+                  width: 220,
                   height: 52,
                   child: MaterialButton(
                     onPressed: () {
                       MaterialPageRoute route = MaterialPageRoute(
-                        builder: (context) => const OrderPage(),
-                      );
-
+                          builder: (context) => const SignUpPage());
                       routes.add(route);
                       Navigator.push(
                         context,
                         route,
                       );
-
-                      while (routes.length != 1) {
-                        try {
-                          Navigator.removeRoute(context, routes[0]);
-                          routes.removeAt(0);
-                        } catch (e) {
-                          print(e);
-                        }
-                      }
                     },
                     color: Colors.black,
                     child: const Text(
-                      'Back to Assignment List',
+                      'Get Started',
                       style: TextStyle(
                         color: Colors.white,
                       ),
