@@ -1,16 +1,8 @@
-import 'package:delivery/confirm_page.dart';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
-import 'package:flutter_barcode_sdk/dynamsoft_barcode.dart';
-import 'package:flutter_barcode_sdk/flutter_barcode_sdk.dart';
-import 'package:flutter_ocr_sdk/mrz_line.dart';
-import 'package:flutter_ocr_sdk/mrz_result.dart';
-import 'data/driver_license.dart';
+import 'camera/mobile_camera.dart';
+import 'confirm_page.dart';
 import 'global.dart';
-
-import 'dart:io';
-
-import 'package:flutter/foundation.dart';
 
 class IdScanPage extends StatefulWidget {
   const IdScanPage({super.key});
@@ -20,205 +12,69 @@ class IdScanPage extends StatefulWidget {
 }
 
 class _IdScanPageState extends State<IdScanPage> with WidgetsBindingObserver {
-  bool _isDriverLicense = true;
-  CameraController? _controller;
-  late List<CameraDescription> _cameras;
-  Size? _previewSize;
-  bool _isScanAvailable = true;
-  List<BarcodeResult>? _barcodeResults;
-  List<List<MrzLine>>? _mrzLines;
+  late MobileCamera _mobileCamera;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    initCamera();
+
+    _mobileCamera = MobileCamera(
+        context: context,
+        uiRefreshCallback: refreshUI,
+        isMountedCallback: isMounted,
+        navigationCallback: navigation);
+    _mobileCamera.initState();
   }
 
-  Future<void> toggleCamera(int index) async {
-    if (_controller != null) _controller!.dispose();
+  void navigation() {
+    MaterialPageRoute route = MaterialPageRoute(
+      builder: (context) => const ConfirmPage(),
+    );
+    routes.add(route);
+    Navigator.push(
+      context,
+      route,
+    ).then((value) => _mobileCamera.initCamera());
+  }
 
-    _controller = CameraController(_cameras[index], ResolutionPreset.medium);
-    _controller!.initialize().then((_) {
-      if (!mounted) {
-        return;
-      }
+  void refreshUI() {
+    setState(() {});
+  }
 
-      _previewSize = _controller!.value.previewSize;
-
-      startVideo();
-    }).catchError((Object e) {
-      if (e is CameraException) {
-        switch (e.code) {
-          case 'CameraAccessDenied':
-            break;
-          default:
-            break;
-        }
-      }
-    });
+  bool isMounted() {
+    return mounted;
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    stopVideo();
+    _mobileCamera.stopVideo();
     super.dispose();
-  }
-
-  void stopVideo() async {
-    if (_controller == null) return;
-    await _controller!.stopImageStream();
-    _controller!.dispose();
-    _controller = null;
-  }
-
-  void startVideo() async {
-    setState(() {
-      _barcodeResults = null;
-      _mrzLines = null;
-    });
-
-    await _controller!.startImageStream((CameraImage availableImage) async {
-      assert(defaultTargetPlatform == TargetPlatform.android ||
-          defaultTargetPlatform == TargetPlatform.iOS);
-      int format = ImagePixelFormat.IPF_NV21.index;
-
-      switch (availableImage.format.group) {
-        case ImageFormatGroup.yuv420:
-          format = ImagePixelFormat.IPF_NV21.index;
-          break;
-        case ImageFormatGroup.bgra8888:
-          format = ImagePixelFormat.IPF_ARGB_8888.index;
-          break;
-        default:
-          format = ImagePixelFormat.IPF_RGB_888.index;
-      }
-
-      if (!_isScanAvailable) {
-        return;
-      }
-
-      _isScanAvailable = false;
-
-      if (_isDriverLicense) {
-        setState(() {
-          _mrzLines = null;
-        });
-        barcodeReader
-            .decodeImageBuffer(
-                availableImage.planes[0].bytes,
-                availableImage.width,
-                availableImage.height,
-                availableImage.planes[0].bytesPerRow,
-                format)
-            .then((results) {
-          if (!mounted) return;
-          if (MediaQuery.of(context).size.width <
-              MediaQuery.of(context).size.height) {
-            if (Platform.isAndroid) {
-              results = rotate90barcode(results, _previewSize!.height.toInt());
-            }
-          }
-          setState(() {
-            _barcodeResults = results;
-          });
-
-          if (results.isNotEmpty) {
-            Map<String, String>? map = parseLicense(results[0].text);
-            if (map != null) {
-              stopVideo();
-              MaterialPageRoute route = MaterialPageRoute(
-                builder: (context) => const ConfirmPage(),
-              );
-              routes.add(route);
-              Navigator.push(
-                context,
-                route,
-              ).then((value) => initCamera());
-            }
-          }
-
-          _isScanAvailable = true;
-        });
-      } else {
-        setState(() {
-          _barcodeResults = null;
-        });
-        mrzDetector
-            .recognizeByBuffer(
-                availableImage.planes[0].bytes,
-                availableImage.width,
-                availableImage.height,
-                availableImage.planes[0].bytesPerRow,
-                format)
-            .then((results) {
-          if (results == null || !mounted) return;
-
-          if (MediaQuery.of(context).size.width <
-              MediaQuery.of(context).size.height) {
-            if (Platform.isAndroid) {
-              results = rotate90mrz(results, _previewSize!.height.toInt());
-            }
-          }
-          setState(() {
-            _mrzLines = results;
-          });
-
-          if (results.isNotEmpty) {
-            stopVideo();
-            MaterialPageRoute route = MaterialPageRoute(
-              builder: (context) => const ConfirmPage(),
-            );
-            routes.add(route);
-            Navigator.push(
-              context,
-              route,
-            ).then((value) => initCamera());
-          }
-
-          _isScanAvailable = true;
-        });
-      }
-    });
-  }
-
-  Future<void> initCamera() async {
-    try {
-      WidgetsFlutterBinding.ensureInitialized();
-      _cameras = await availableCameras();
-      if (_cameras.isEmpty) return;
-
-      toggleCamera(0);
-    } on CameraException catch (e) {
-      print(e);
-    }
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    final CameraController? cameraController = _controller;
-
-    // App state changed before we got the chance to initialize.
-    if (cameraController == null || !cameraController.value.isInitialized) {
+    if (_mobileCamera.controller == null ||
+        !_mobileCamera.controller!.value.isInitialized) {
       return;
     }
 
     if (state == AppLifecycleState.inactive) {
-      cameraController.dispose();
+      _mobileCamera.controller!.dispose();
     } else if (state == AppLifecycleState.resumed) {
-      toggleCamera(0);
+      _mobileCamera.toggleCamera(0);
     }
   }
 
   Widget getButtons() {
-    if (_isDriverLicense) {
+    if (_mobileCamera.isDriverLicense) {
       return Row(children: [
         GestureDetector(
             onTap: () {
               setState(() {
-                _isDriverLicense = true;
-                _mrzLines = null;
+                _mobileCamera.isDriverLicense = true;
+                _mobileCamera.mrzLines = null;
               });
             },
             child: SizedBox(
@@ -256,8 +112,8 @@ class _IdScanPageState extends State<IdScanPage> with WidgetsBindingObserver {
         GestureDetector(
             onTap: () {
               setState(() {
-                _isDriverLicense = false;
-                _barcodeResults = null;
+                _mobileCamera.isDriverLicense = false;
+                _mobileCamera.barcodeResults = null;
               });
             },
             child: SizedBox(
@@ -292,7 +148,7 @@ class _IdScanPageState extends State<IdScanPage> with WidgetsBindingObserver {
         GestureDetector(
             onTap: () {
               setState(() {
-                _isDriverLicense = true;
+                _mobileCamera.isDriverLicense = true;
               });
             },
             child: SizedBox(
@@ -324,7 +180,7 @@ class _IdScanPageState extends State<IdScanPage> with WidgetsBindingObserver {
         GestureDetector(
             onTap: () {
               setState(() {
-                _isDriverLicense = false;
+                _mobileCamera.isDriverLicense = false;
               });
             },
             child: SizedBox(
@@ -388,7 +244,8 @@ class _IdScanPageState extends State<IdScanPage> with WidgetsBindingObserver {
           ),
           body: Stack(
             children: <Widget>[
-              if (_controller != null && _previewSize != null)
+              if (_mobileCamera.controller != null &&
+                  _mobileCamera.previewSize != null)
                 Positioned(
                   top: 0,
                   right: 0,
@@ -398,23 +255,25 @@ class _IdScanPageState extends State<IdScanPage> with WidgetsBindingObserver {
                     fit: BoxFit.cover,
                     child: Stack(
                       children: [
-                        if (_controller != null && _previewSize != null)
+                        if (_mobileCamera.controller != null &&
+                            _mobileCamera.previewSize != null)
                           SizedBox(
                               width: MediaQuery.of(context).size.width <
                                       MediaQuery.of(context).size.height
-                                  ? _previewSize!.height
-                                  : _previewSize!.width,
+                                  ? _mobileCamera.previewSize!.height
+                                  : _mobileCamera.previewSize!.width,
                               height: MediaQuery.of(context).size.width <
                                       MediaQuery.of(context).size.height
-                                  ? _previewSize!.width
-                                  : _previewSize!.height,
-                              child: CameraPreview(_controller!)),
+                                  ? _mobileCamera.previewSize!.width
+                                  : _mobileCamera.previewSize!.height,
+                              child: _mobileCamera.getPreview()),
                         Positioned(
                           top: 0.0,
                           right: 0.0,
                           bottom: 50,
                           left: 0.0,
-                          child: createOverlay(_barcodeResults, _mrzLines),
+                          child: createOverlay(_mobileCamera.barcodeResults,
+                              _mobileCamera.mrzLines),
                         ),
                       ],
                     ),
