@@ -1,3 +1,4 @@
+import 'package:delivery/data/profile_data.dart';
 import 'package:delivery/id_scan_page.dart';
 import 'package:delivery/global.dart';
 import 'package:delivery/signup_page.dart';
@@ -303,6 +304,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           prefs.remove('firstName');
                           prefs.remove('lastName');
                           prefs.remove('password');
+                          data = ProfileData();
                         },
                         color: const Color(0xffECECEC),
                         child: const Text(

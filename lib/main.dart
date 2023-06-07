@@ -17,6 +17,8 @@ class MyApp extends StatelessWidget {
   Future<SharedPreferences> loadData() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await initBarcodeSDK();
+    await initMRZSDK();
+    await initDocumentSDK();
     return prefs;
   }
 

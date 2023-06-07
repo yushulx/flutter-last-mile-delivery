@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter_barcode_sdk/dynamsoft_barcode.dart';
 import 'package:flutter_barcode_sdk/flutter_barcode_sdk.dart';
+import 'package:flutter_ocr_sdk/mrz_line.dart';
+import 'package:flutter_ocr_sdk/mrz_result.dart';
 import 'data/driver_license.dart';
 import 'global.dart';
 
@@ -23,7 +25,8 @@ class _IdScanPageState extends State<IdScanPage> with WidgetsBindingObserver {
   late List<CameraDescription> _cameras;
   Size? _previewSize;
   bool _isScanAvailable = true;
-  List<BarcodeResult>? _results;
+  List<BarcodeResult>? _barcodeResults;
+  List<List<MrzLine>>? _mrzLines;
 
   @override
   void initState() {
@@ -42,7 +45,6 @@ class _IdScanPageState extends State<IdScanPage> with WidgetsBindingObserver {
       }
 
       _previewSize = _controller!.value.previewSize;
-      setState(() {});
 
       startVideo();
     }).catchError((Object e) {
@@ -72,6 +74,11 @@ class _IdScanPageState extends State<IdScanPage> with WidgetsBindingObserver {
   }
 
   void startVideo() async {
+    setState(() {
+      _barcodeResults = null;
+      _mrzLines = null;
+    });
+
     await _controller!.startImageStream((CameraImage availableImage) async {
       assert(defaultTargetPlatform == TargetPlatform.android ||
           defaultTargetPlatform == TargetPlatform.iOS);
@@ -94,43 +101,75 @@ class _IdScanPageState extends State<IdScanPage> with WidgetsBindingObserver {
 
       _isScanAvailable = false;
 
-      barcodeReader
-          .decodeImageBuffer(
-              availableImage.planes[0].bytes,
-              availableImage.width,
-              availableImage.height,
-              availableImage.planes[0].bytesPerRow,
-              format)
-          .then((results) {
-        if (MediaQuery.of(context).size.width <
-            MediaQuery.of(context).size.height) {
-          if (Platform.isAndroid) {
-            results = rotate90barcode(results, _previewSize!.height.toInt());
-          }
-        }
+      if (_isDriverLicense) {
         setState(() {
-          _results = results;
+          _mrzLines = null;
         });
-
-        if (results.isNotEmpty) {
-          Map<String, String>? map = parseLicense(results[0].text);
-          if (map != null) {
-            _controller!.stopImageStream();
-            MaterialPageRoute route = MaterialPageRoute(
-              builder: (context) => const ConfirmPage(),
-            );
-            routes.add(route);
-            Navigator.push(
-              context,
-              route,
-            ).then((value) => startVideo());
+        barcodeReader
+            .decodeImageBuffer(
+                availableImage.planes[0].bytes,
+                availableImage.width,
+                availableImage.height,
+                availableImage.planes[0].bytesPerRow,
+                format)
+            .then((results) {
+          if (!mounted) return;
+          if (MediaQuery.of(context).size.width <
+              MediaQuery.of(context).size.height) {
+            if (Platform.isAndroid) {
+              results = rotate90barcode(results, _previewSize!.height.toInt());
+            }
           }
-        } else {
+          setState(() {
+            _barcodeResults = results;
+          });
+
+          if (results.isNotEmpty) {
+            Map<String, String>? map = parseLicense(results[0].text);
+            if (map != null) {
+              _controller!.stopImageStream();
+              MaterialPageRoute route = MaterialPageRoute(
+                builder: (context) => const ConfirmPage(),
+              );
+              routes.add(route);
+              Navigator.push(
+                context,
+                route,
+              ).then((value) => startVideo());
+            }
+          } else {
+            _isScanAvailable = true;
+          }
+
           _isScanAvailable = true;
-        }
-      }).catchError((error) {
-        _isScanAvailable = true;
-      });
+        });
+      } else {
+        setState(() {
+          _barcodeResults = null;
+        });
+        mrzDetector
+            .recognizeByBuffer(
+                availableImage.planes[0].bytes,
+                availableImage.width,
+                availableImage.height,
+                availableImage.planes[0].bytesPerRow,
+                format)
+            .then((results) {
+          if (results == null || !mounted) return;
+
+          if (MediaQuery.of(context).size.width <
+              MediaQuery.of(context).size.height) {
+            if (Platform.isAndroid) {
+              results = rotate90mrz(results, _previewSize!.height.toInt());
+            }
+          }
+          setState(() {
+            _mrzLines = results;
+          });
+
+          _isScanAvailable = true;
+        });
+      }
     });
   }
 
@@ -169,6 +208,7 @@ class _IdScanPageState extends State<IdScanPage> with WidgetsBindingObserver {
             onTap: () {
               setState(() {
                 _isDriverLicense = true;
+                _mrzLines = null;
               });
             },
             child: SizedBox(
@@ -207,6 +247,7 @@ class _IdScanPageState extends State<IdScanPage> with WidgetsBindingObserver {
             onTap: () {
               setState(() {
                 _isDriverLicense = false;
+                _barcodeResults = null;
               });
             },
             child: SizedBox(
@@ -335,14 +376,14 @@ class _IdScanPageState extends State<IdScanPage> with WidgetsBindingObserver {
               },
             ),
           ),
-          body: Column(
+          body: Stack(
             children: <Widget>[
-              SizedBox(
-                  width: MediaQuery.of(context).size.width,
-                  height: MediaQuery.of(context).size.height -
-                      MediaQuery.of(context).padding.top -
-                      kToolbarHeight -
-                      50,
+              if (_controller != null && _previewSize != null)
+                Positioned(
+                  top: 0,
+                  right: 0,
+                  left: 0,
+                  bottom: 50,
                   child: FittedBox(
                     fit: BoxFit.cover,
                     child: Stack(
@@ -361,28 +402,15 @@ class _IdScanPageState extends State<IdScanPage> with WidgetsBindingObserver {
                         Positioned(
                           top: 0.0,
                           right: 0.0,
-                          bottom: 0.0,
+                          bottom: 50,
                           left: 0.0,
-                          child: _results == null || _results!.isEmpty
-                              ? Container(
-                                  color: Colors.black.withOpacity(0.1),
-                                  child: const Center(
-                                    child: Text(
-                                      'No barcode detected',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 20.0,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ))
-                              : createOverlay(_results!),
+                          child: createOverlay(_barcodeResults, _mrzLines),
                         ),
-                        // Positioned(bottom: 0, child: getButtons()),
                       ],
                     ),
-                  )),
-              getButtons(),
+                  ),
+                ),
+              Positioned(bottom: 0, child: getButtons()),
             ],
           ),
         ));
