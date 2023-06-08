@@ -56,6 +56,7 @@ class MobileCamera {
   }
 
   void stopVideo() async {
+    isFinished = true;
     if (controller == null) return;
     if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
       await controller!.stopImageStream();
@@ -69,110 +70,99 @@ class MobileCamera {
   }
 
   Future<void> webCamera() async {
-    if (controller == null) return;
+    if (controller == null || isFinished) return;
 
-    Future.delayed(const Duration(milliseconds: 20), () async {
+    Future.delayed(const Duration(milliseconds: 10), () async {
       if (controller == null || cbIsMounted() == false) return;
 
       XFile file = await controller!.takePicture();
 
       if (scanType == ScanType.id) {
         if (isDriverLicense) {
-          mrzLines = null;
-          cbRefreshUi();
-          barcodeReader.decodeFile(file.path).then((results) {
-            if (!cbIsMounted()) return;
-            barcodeResults = results;
-            cbRefreshUi();
-            if (results.isNotEmpty) {
-              try {
-                Map<String, String>? map = parseLicense(results[0].text);
-                if (map != null) {
-                  stopVideo();
-                  if (!isFinished) {
-                    isFinished = true;
-                    cbNavigation();
-                  }
-                }
-              } catch (e) {
-                print(e);
-              }
-            }
-
-            _isScanAvailable = true;
-          });
-        } else {
-          barcodeResults = null;
-          cbRefreshUi();
-          mrzDetector.recognizeByFile(file.path).then((results) {
-            if (results == null || !cbIsMounted()) return;
-
-            mrzLines = results;
-            cbRefreshUi();
-            if (results.isNotEmpty) {
-              MrzResult information = MrzResult();
-
-              try {
-                for (List<MrzLine> area in results) {
-                  if (area.length == 2) {
-                    information = MRZ.parseTwoLines(area[0].text, area[1].text);
-                  } else if (area.length == 3) {
-                    information = MRZ.parseThreeLines(
-                        area[0].text, area[1].text, area[2].text);
-                  }
-                }
-              } catch (e) {
-                print(e);
-              }
-
-              if (information.surname == '') {
-                information.surname = 'Not found';
-              }
-
-              if (information.givenName == '') {
-                information.givenName = 'Not found';
-              }
-
-              if (information.nationality == '') {
-                information.nationality = 'Not found';
-              }
-
-              if (information.passportNumber == '') {
-                information.passportNumber = 'Not found';
-              }
-
-              stopVideo();
-              if (!isFinished) {
-                isFinished = true;
-                ProfileData scannedData = ProfileData();
-
-                scannedData.firstName = information.givenName;
-                scannedData.lastName = information.surname;
-                scannedData.nationality = information.nationality;
-                scannedData.idNumber = information.passportNumber;
-                cbNavigation(scannedData);
-              }
-            }
-          });
-        }
-      } else if (scanType == ScanType.barcode) {
-        barcodeReader.decodeFile(file.path).then((results) {
+          var results = await barcodeReader.decodeFile(file.path);
           if (!cbIsMounted()) return;
-
           barcodeResults = results;
-
+          cbRefreshUi();
           if (results.isNotEmpty) {
+            try {
+              Map<String, String>? map = parseLicense(results[0].text);
+              if (map != null) {
+                stopVideo();
+                if (!isFinished) {
+                  isFinished = true;
+                  cbNavigation();
+                }
+              }
+            } catch (e) {
+              print(e);
+            }
+          }
+        } else {
+          var results = await mrzDetector.recognizeByFile(file.path);
+          if (results == null || !cbIsMounted()) return;
+
+          mrzLines = results;
+          cbRefreshUi();
+          if (results.isNotEmpty) {
+            MrzResult information = MrzResult();
+
+            try {
+              for (List<MrzLine> area in results) {
+                if (area.length == 2) {
+                  information = MRZ.parseTwoLines(area[0].text, area[1].text);
+                } else if (area.length == 3) {
+                  information = MRZ.parseThreeLines(
+                      area[0].text, area[1].text, area[2].text);
+                }
+              }
+            } catch (e) {
+              print(e);
+            }
+
+            if (information.surname == '') {
+              information.surname = 'Not found';
+            }
+
+            if (information.givenName == '') {
+              information.givenName = 'Not found';
+            }
+
+            if (information.nationality == '') {
+              information.nationality = 'Not found';
+            }
+
+            if (information.passportNumber == '') {
+              information.passportNumber = 'Not found';
+            }
+
             stopVideo();
             if (!isFinished) {
               isFinished = true;
-              var random = Random();
-              var element = orders[random.nextInt(orders.length)];
-              cbNavigation(element);
+              ProfileData scannedData = ProfileData();
+
+              scannedData.firstName = information.givenName;
+              scannedData.lastName = information.surname;
+              scannedData.nationality = information.nationality;
+              scannedData.idNumber = information.passportNumber;
+              cbNavigation(scannedData);
             }
           }
+        }
+      } else if (scanType == ScanType.barcode) {
+        var results = await barcodeReader.decodeFile(file.path);
+        if (!cbIsMounted()) return;
 
-          _isScanAvailable = true;
-        });
+        barcodeResults = results;
+
+        if (results.isNotEmpty) {
+          stopVideo();
+          if (!isFinished) {
+            isFinished = true;
+            var random = Random();
+            var element = orders[random.nextInt(orders.length)];
+            cbNavigation(element);
+          }
+        }
       } else if (scanType == ScanType.document) {
         documentResults = await docScanner.detectFile(file.path);
         if (!cbIsMounted()) return;
@@ -208,7 +198,10 @@ class MobileCamera {
           }
         });
       }
-      webCamera();
+
+      if (!isFinished) {
+        webCamera();
+      }
     });
   }
 
