@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'camera/mobile_camera.dart';
+import 'camera/camera_manager.dart';
 import 'confirm_page.dart';
 import 'global.dart';
 
