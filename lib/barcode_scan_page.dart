@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:delivery/delivery_page.dart';
 import 'package:flutter/material.dart';
 
@@ -22,21 +24,19 @@ class _BarcodeScanPageState extends State<BarcodeScanPage>
 
     _mobileCamera = MobileCamera(
         context: context,
-        uiRefreshCallback: refreshUI,
-        isMountedCallback: isMounted,
-        navigationCallback: navigation);
+        cbRefreshUi: refreshUI,
+        cbIsMounted: isMounted,
+        cbNavigation: navigation,
+        scanType: ScanType.barcode);
     _mobileCamera.initState();
   }
 
   void navigation() {
-    MaterialPageRoute route = MaterialPageRoute(
-      builder: (context) => const DeliveryPage(),
-    );
-    routes.add(route);
-    Navigator.push(
-      context,
-      route,
-    ).then((value) => _mobileCamera.initCamera());
+    var random = Random();
+    var element = mockOrders[random.nextInt(mockOrders.length)];
+    orders.add(element);
+    routes.removeLast();
+    Navigator.of(context).pop();
   }
 
   void refreshUI() {
@@ -99,7 +99,7 @@ class _BarcodeScanPageState extends State<BarcodeScanPage>
                   top: 0,
                   right: 0,
                   left: 0,
-                  bottom: 50,
+                  bottom: 0,
                   child: FittedBox(
                     fit: BoxFit.cover,
                     child: Stack(
@@ -119,7 +119,7 @@ class _BarcodeScanPageState extends State<BarcodeScanPage>
                         Positioned(
                           top: 0.0,
                           right: 0.0,
-                          bottom: 50,
+                          bottom: 0,
                           left: 0.0,
                           child: createOverlay(_mobileCamera.barcodeResults,
                               _mobileCamera.mrzLines),

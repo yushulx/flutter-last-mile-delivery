@@ -6,19 +6,15 @@ import 'data/order_data.dart';
 import 'global.dart';
 
 class DeliveryPage extends StatefulWidget {
-  const DeliveryPage({super.key});
+  const DeliveryPage({super.key, required this.order});
+
+  final OrderData order;
 
   @override
   State<DeliveryPage> createState() => _DeliveryPageState();
 }
 
 class _DeliveryPageState extends State<DeliveryPage> {
-  OrderData order = OrderData(
-      id: '13134324',
-      address: '9337 Hagenes Plains Sutite 990',
-      time: '08:30 am - 12:00 am',
-      status: 'Assigned');
-
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
@@ -60,7 +56,7 @@ class _DeliveryPageState extends State<DeliveryPage> {
                       children: [
                         const SizedBox(width: 20),
                         Text(
-                          'Order ID:${order.id}',
+                          'Order ID:${widget.order.id}',
                           style: const TextStyle(
                             color: Colors.black,
                             fontSize: 16,
@@ -84,7 +80,7 @@ class _DeliveryPageState extends State<DeliveryPage> {
                           height: 25,
                         ),
                         Text(
-                          '${order.address}',
+                          '${widget.order.address}',
                           style: const TextStyle(
                             color: Colors.black,
                             fontSize: 16,
@@ -105,7 +101,7 @@ class _DeliveryPageState extends State<DeliveryPage> {
                           height: 25,
                         ),
                         Text(
-                          'Delivery ${order.time}',
+                          'Delivery ${widget.order.time}',
                           style: const TextStyle(
                             color: Colors.black,
                             fontSize: 16,

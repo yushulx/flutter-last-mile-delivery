@@ -5,6 +5,7 @@ import 'package:flutter_document_scan_sdk/flutter_document_scan_sdk.dart';
 import 'package:flutter_ocr_sdk/flutter_ocr_sdk.dart';
 import 'package:flutter_ocr_sdk/mrz_line.dart';
 
+import 'data/order_data.dart';
 import 'data/profile_data.dart';
 
 List<MaterialPageRoute> routes = [];
@@ -14,6 +15,25 @@ FlutterOcrSdk mrzDetector = FlutterOcrSdk();
 FlutterDocumentScanSdk docScanner = FlutterDocumentScanSdk();
 int NOT_CHECKED = -10;
 int licenseStatus = NOT_CHECKED;
+
+List<OrderData> orders = [];
+final List<OrderData> mockOrders = [
+  OrderData(
+      id: '13134324',
+      address: '9337 Hagenes Plains Sutite 990',
+      time: '08:30 am - 12:00 am',
+      status: 'Assigned'),
+  OrderData(
+      id: '34253454',
+      address: '9337 Hagenes Plains Sutite 990',
+      time: '08:30 am - 12:00 am',
+      status: 'Started'),
+  OrderData(
+      id: '56578835',
+      address: 'San Francisco. CA. United States',
+      time: '01:30 pm - 02:00 pm',
+      status: 'Finished')
+];
 
 Future<void> initBarcodeSDK() async {
   await barcodeReader.setLicense(

@@ -21,9 +21,10 @@ class _IdScanPageState extends State<IdScanPage> with WidgetsBindingObserver {
 
     _mobileCamera = MobileCamera(
         context: context,
-        uiRefreshCallback: refreshUI,
-        isMountedCallback: isMounted,
-        navigationCallback: navigation);
+        cbRefreshUi: refreshUI,
+        cbIsMounted: isMounted,
+        cbNavigation: navigation,
+        scanType: ScanType.id);
     _mobileCamera.initState();
   }
 
@@ -270,7 +271,7 @@ class _IdScanPageState extends State<IdScanPage> with WidgetsBindingObserver {
                         Positioned(
                           top: 0.0,
                           right: 0.0,
-                          bottom: 50,
+                          bottom: 0,
                           left: 0.0,
                           child: createOverlay(_mobileCamera.barcodeResults,
                               _mobileCamera.mrzLines),
