@@ -73,7 +73,7 @@ class MobileCamera {
     if (controller == null || isFinished) return;
 
     Future.delayed(const Duration(milliseconds: 10), () async {
-      if (controller == null || cbIsMounted() == false) return;
+      if (controller == null || isFinished || cbIsMounted() == false) return;
 
       XFile file = await controller!.takePicture();
 
