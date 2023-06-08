@@ -61,6 +61,33 @@ class _DocScanPageState extends State<DocScanPage> with WidgetsBindingObserver {
     }
   }
 
+  List<Widget> createCameraPreview() {
+    if (_mobileCamera.controller != null && _mobileCamera.previewSize != null) {
+      return [
+        SizedBox(
+            width: MediaQuery.of(context).size.width <
+                    MediaQuery.of(context).size.height
+                ? _mobileCamera.previewSize!.height
+                : _mobileCamera.previewSize!.width,
+            height: MediaQuery.of(context).size.width <
+                    MediaQuery.of(context).size.height
+                ? _mobileCamera.previewSize!.width
+                : _mobileCamera.previewSize!.height,
+            child: _mobileCamera.getPreview()),
+        Positioned(
+          top: 0.0,
+          right: 0.0,
+          bottom: 0,
+          left: 0.0,
+          child: createOverlay(_mobileCamera.barcodeResults,
+              _mobileCamera.mrzLines, _mobileCamera.documentResults),
+        )
+      ];
+    } else {
+      return [const CircularProgressIndicator()];
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -96,30 +123,7 @@ class _DocScanPageState extends State<DocScanPage> with WidgetsBindingObserver {
                   child: FittedBox(
                     fit: BoxFit.cover,
                     child: Stack(
-                      children: [
-                        if (_mobileCamera.controller != null &&
-                            _mobileCamera.previewSize != null)
-                          SizedBox(
-                              width: MediaQuery.of(context).size.width <
-                                      MediaQuery.of(context).size.height
-                                  ? _mobileCamera.previewSize!.height
-                                  : _mobileCamera.previewSize!.width,
-                              height: MediaQuery.of(context).size.width <
-                                      MediaQuery.of(context).size.height
-                                  ? _mobileCamera.previewSize!.width
-                                  : _mobileCamera.previewSize!.height,
-                              child: _mobileCamera.getPreview()),
-                        Positioned(
-                          top: 0.0,
-                          right: 0.0,
-                          bottom: 0,
-                          left: 0.0,
-                          child: createOverlay(
-                              _mobileCamera.barcodeResults,
-                              _mobileCamera.mrzLines,
-                              _mobileCamera.documentResults),
-                        ),
-                      ],
+                      children: createCameraPreview(),
                     ),
                   ),
                 ),
