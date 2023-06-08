@@ -3,6 +3,7 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
+  camera_windows
   flutter_barcode_sdk
   flutter_document_scan_sdk
   flutter_ocr_sdk

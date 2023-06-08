@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:math';
 import 'dart:ui';
 
+import 'package:camera_windows/camera_windows.dart';
 import 'package:delivery/data/profile_data.dart';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
@@ -20,6 +22,7 @@ import '../global.dart';
 import '../utils.dart';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:camera_platform_interface/camera_platform_interface.dart';
 
 enum ScanType { id, barcode, document }
 
@@ -35,6 +38,7 @@ class MobileCamera {
   bool isDriverLicense = true;
   ScanType scanType = ScanType.id;
   bool isFinished = false;
+  StreamSubscription<FrameAvailabledEvent>? _frameAvailableStreamSubscription;
 
   MobileCamera(
       {required this.context,
@@ -53,12 +57,15 @@ class MobileCamera {
 
   void stopVideo() async {
     if (controller == null) return;
-    if (!kIsWeb) {
+    if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
       await controller!.stopImageStream();
     }
 
     controller!.dispose();
     controller = null;
+
+    _frameAvailableStreamSubscription?.cancel();
+    _frameAvailableStreamSubscription = null;
   }
 
   Future<void> webCamera() async {
@@ -478,8 +485,180 @@ class MobileCamera {
 
     if (kIsWeb) {
       webCamera();
-    } else {
+    } else if (Platform.isAndroid || Platform.isIOS) {
       mobileCamera();
+    } else if (Platform.isWindows) {
+      _frameAvailableStreamSubscription?.cancel();
+      _frameAvailableStreamSubscription =
+          (CameraPlatform.instance as CameraWindows)
+              .onFrameAvailable(controller!.cameraId)
+              .listen(_onFrameAvailable);
+    }
+  }
+
+  void _onFrameAvailable(FrameAvailabledEvent event) {
+    if (cbIsMounted() == false) return;
+
+    Map<String, dynamic> map = event.toJson();
+    final Uint8List? data = map['bytes'] as Uint8List?;
+    if (data != null) {
+      if (!_isScanAvailable) {
+        return;
+      }
+
+      _isScanAvailable = false;
+      int width = previewSize!.width.toInt();
+      int height = previewSize!.height.toInt();
+
+      if (scanType == ScanType.id) {
+        if (isDriverLicense) {
+          mrzLines = null;
+          cbRefreshUi();
+          barcodeReader
+              .decodeImageBuffer(data, width, height, width * 4,
+                  ImagePixelFormat.IPF_ARGB_8888.index)
+              .then((results) {
+            if (!cbIsMounted()) return;
+            barcodeResults = results;
+            cbRefreshUi();
+            if (results.isNotEmpty) {
+              Map<String, String>? map = parseLicense(results[0].text);
+              if (map != null) {
+                stopVideo();
+                if (!isFinished) {
+                  isFinished = true;
+                  cbNavigation();
+                }
+              }
+            }
+
+            _isScanAvailable = true;
+          });
+        } else {
+          barcodeResults = null;
+          cbRefreshUi();
+          mrzDetector
+              .recognizeByBuffer(data, width, height, width * 4,
+                  ImagePixelFormat.IPF_ARGB_8888.index)
+              .then((results) {
+            if (results == null || !cbIsMounted()) return;
+
+            mrzLines = results;
+            cbRefreshUi();
+            if (results.isNotEmpty) {
+              MrzResult information = MrzResult();
+
+              try {
+                for (List<MrzLine> area in results) {
+                  if (area.length == 2) {
+                    information = MRZ.parseTwoLines(area[0].text, area[1].text);
+                  } else if (area.length == 3) {
+                    information = MRZ.parseThreeLines(
+                        area[0].text, area[1].text, area[2].text);
+                  }
+                }
+              } catch (e) {
+                print(e);
+              }
+
+              if (information.surname == '') {
+                information.surname = 'Not found';
+              }
+
+              if (information.givenName == '') {
+                information.givenName = 'Not found';
+              }
+
+              if (information.nationality == '') {
+                information.nationality = 'Not found';
+              }
+
+              if (information.passportNumber == '') {
+                information.passportNumber = 'Not found';
+              }
+
+              stopVideo();
+              if (!isFinished) {
+                isFinished = true;
+                ProfileData scannedData = ProfileData();
+
+                scannedData.firstName = information.givenName;
+                scannedData.lastName = information.surname;
+                scannedData.nationality = information.nationality;
+                scannedData.idNumber = information.passportNumber;
+                cbNavigation(scannedData);
+              }
+            }
+
+            _isScanAvailable = true;
+          });
+        }
+      } else if (scanType == ScanType.barcode) {
+        barcodeReader
+            .decodeImageBuffer(data, width, height, width * 4,
+                ImagePixelFormat.IPF_ARGB_8888.index)
+            .then((results) {
+          if (!cbIsMounted()) return;
+          barcodeResults = results;
+
+          if (results.isNotEmpty) {
+            stopVideo();
+            if (!isFinished) {
+              isFinished = true;
+              var random = Random();
+              var element = orders[random.nextInt(orders.length)];
+              cbNavigation(element);
+            }
+          }
+
+          _isScanAvailable = true;
+        });
+      } else if (scanType == ScanType.document) {
+        docScanner
+            .detectBuffer(data, width, height, width * 4,
+                ImagePixelFormat.IPF_ARGB_8888.index)
+            .then((results) {
+          if (!cbIsMounted()) return;
+          results = filterResults(results, width, height);
+          if (results.isEmpty) {
+            _isScanAvailable = true;
+            return;
+          }
+
+          documentResults = results;
+
+          if (results.isNotEmpty) {
+            if (!isFinished) {
+              isFinished = true;
+
+              int imageWidth = width;
+              int imageHeight = height;
+
+              docScanner
+                  .normalizeBuffer(
+                      data,
+                      imageWidth,
+                      imageHeight,
+                      imageWidth * 4,
+                      ImagePixelFormat.IPF_ARGB_8888.index,
+                      results[0].points)
+                  .then((normalizedImage) {
+                if (normalizedImage != null) {
+                  decodeImageFromPixels(
+                      normalizedImage.data,
+                      normalizedImage.width,
+                      normalizedImage.height,
+                      PixelFormat.rgba8888, (ui.Image img) {
+                    cbNavigation(img);
+                  });
+                }
+              });
+            }
+          }
+
+          _isScanAvailable = true;
+        });
+      }
     }
   }
 
