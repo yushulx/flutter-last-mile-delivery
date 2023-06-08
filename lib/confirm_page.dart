@@ -86,6 +86,9 @@ class _ConfirmPageState extends State<ConfirmPage> {
                                                   value.isEmpty) {
                                                 return 'Please enter your first name';
                                               }
+
+                                              widget.scannedData.firstName =
+                                                  value;
                                               return null;
                                             },
                                           ),
@@ -114,6 +117,9 @@ class _ConfirmPageState extends State<ConfirmPage> {
                                                     value.isEmpty) {
                                                   return 'Please enter your last name';
                                                 }
+
+                                                widget.scannedData.lastName =
+                                                    value;
                                                 return null;
                                               },
                                             )),
@@ -140,7 +146,8 @@ class _ConfirmPageState extends State<ConfirmPage> {
                                           if (value == null || value.isEmpty) {
                                             return 'Please enter your email';
                                           }
-                                          // Add more complex validation here if needed
+                                          widget.scannedData.nationality =
+                                              value;
                                           return null;
                                         },
                                       )),
@@ -151,7 +158,7 @@ class _ConfirmPageState extends State<ConfirmPage> {
                             Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text('Driver License Number *'),
+                                  const Text('Identification Number *'),
                                   const SizedBox(
                                     height: 10,
                                   ),
@@ -166,7 +173,7 @@ class _ConfirmPageState extends State<ConfirmPage> {
                                           if (value == null || value.isEmpty) {
                                             return 'Please enter your password';
                                           }
-                                          // Add more complex validation here if needed
+                                          widget.scannedData.idNumber = value;
                                           return null;
                                         },
                                       )),

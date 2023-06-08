@@ -19,6 +19,8 @@ import '../data/driver_license.dart';
 import '../global.dart';
 import '../utils.dart';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
+
 enum ScanType { id, barcode, document }
 
 class MobileCamera {
@@ -51,20 +53,159 @@ class MobileCamera {
 
   void stopVideo() async {
     if (controller == null) return;
-    await controller!.stopImageStream();
+    if (!kIsWeb) {
+      await controller!.stopImageStream();
+    }
+
     controller!.dispose();
     controller = null;
   }
 
-  void startVideo() async {
-    barcodeResults = null;
-    mrzLines = null;
-    documentResults = null;
+  Future<void> webCamera() async {
+    if (controller == null) return;
 
-    isFinished = false;
+    Future.delayed(const Duration(milliseconds: 20), () async {
+      if (controller == null || cbIsMounted() == false) return;
 
-    cbRefreshUi();
+      XFile file = await controller!.takePicture();
 
+      if (scanType == ScanType.id) {
+        if (isDriverLicense) {
+          mrzLines = null;
+          cbRefreshUi();
+          barcodeReader.decodeFile(file.path).then((results) {
+            if (!cbIsMounted()) return;
+            barcodeResults = results;
+            cbRefreshUi();
+            if (results.isNotEmpty) {
+              try {
+                Map<String, String>? map = parseLicense(results[0].text);
+                if (map != null) {
+                  stopVideo();
+                  if (!isFinished) {
+                    isFinished = true;
+                    cbNavigation();
+                  }
+                }
+              } catch (e) {
+                print(e);
+              }
+            }
+
+            _isScanAvailable = true;
+          });
+        } else {
+          barcodeResults = null;
+          cbRefreshUi();
+          mrzDetector.recognizeByFile(file.path).then((results) {
+            if (results == null || !cbIsMounted()) return;
+
+            mrzLines = results;
+            cbRefreshUi();
+            if (results.isNotEmpty) {
+              MrzResult information = MrzResult();
+
+              try {
+                for (List<MrzLine> area in results) {
+                  if (area.length == 2) {
+                    information = MRZ.parseTwoLines(area[0].text, area[1].text);
+                  } else if (area.length == 3) {
+                    information = MRZ.parseThreeLines(
+                        area[0].text, area[1].text, area[2].text);
+                  }
+                }
+              } catch (e) {
+                print(e);
+              }
+
+              if (information.surname == '') {
+                information.surname = 'Not found';
+              }
+
+              if (information.givenName == '') {
+                information.givenName = 'Not found';
+              }
+
+              if (information.nationality == '') {
+                information.nationality = 'Not found';
+              }
+
+              if (information.passportNumber == '') {
+                information.passportNumber = 'Not found';
+              }
+
+              stopVideo();
+              if (!isFinished) {
+                isFinished = true;
+                ProfileData scannedData = ProfileData();
+
+                scannedData.firstName = information.givenName;
+                scannedData.lastName = information.surname;
+                scannedData.nationality = information.nationality;
+                scannedData.idNumber = information.passportNumber;
+                cbNavigation(scannedData);
+              }
+            }
+          });
+        }
+      } else if (scanType == ScanType.barcode) {
+        barcodeReader.decodeFile(file.path).then((results) {
+          if (!cbIsMounted()) return;
+
+          barcodeResults = results;
+
+          if (results.isNotEmpty) {
+            stopVideo();
+            if (!isFinished) {
+              isFinished = true;
+              var random = Random();
+              var element = orders[random.nextInt(orders.length)];
+              cbNavigation(element);
+            }
+          }
+
+          _isScanAvailable = true;
+        });
+      } else if (scanType == ScanType.document) {
+        documentResults = await docScanner.detectFile(file.path);
+        if (!cbIsMounted()) return;
+
+        documentResults = filterResults(documentResults,
+            previewSize!.width.toInt(), previewSize!.height.toInt());
+
+        if (documentResults == null || documentResults!.isEmpty) {
+          webCamera();
+          return;
+        }
+
+        final data = await file.readAsBytes();
+        ui.Image sourceImage = await decodeImageFromList(data);
+        ByteData? byteData =
+            await sourceImage.toByteData(format: ui.ImageByteFormat.rawRgba);
+
+        Uint8List bytes = byteData!.buffer.asUint8List();
+        int width = sourceImage.width;
+        int height = sourceImage.height;
+        int stride = byteData.lengthInBytes ~/ sourceImage.height;
+        int format = ImagePixelFormat.IPF_ARGB_8888.index;
+
+        docScanner
+            .normalizeBuffer(bytes, width, height, stride, format,
+                documentResults![0].points)
+            .then((normalizedImage) {
+          if (normalizedImage != null) {
+            decodeImageFromPixels(normalizedImage.data, normalizedImage.width,
+                normalizedImage.height, PixelFormat.rgba8888, (ui.Image img) {
+              cbNavigation(img);
+            });
+          }
+        });
+      }
+      webCamera();
+    });
+  }
+
+  void mobileCamera() async {
     await controller!.startImageStream((CameraImage availableImage) async {
       assert(defaultTargetPlatform == TargetPlatform.android ||
           defaultTargetPlatform == TargetPlatform.iOS);
@@ -145,28 +286,47 @@ class MobileCamera {
             mrzLines = results;
             cbRefreshUi();
             if (results.isNotEmpty) {
-              MrzResult? information;
-              for (List<MrzLine> area in results) {
-                if (area.length == 2) {
-                  information = MRZ.parseTwoLines(area[0].text, area[1].text);
-                  print(information);
-                } else if (area.length == 3) {
-                  information = MRZ.parseThreeLines(
-                      area[0].text, area[1].text, area[2].text);
+              MrzResult information = MrzResult();
+
+              try {
+                for (List<MrzLine> area in results) {
+                  if (area.length == 2) {
+                    information = MRZ.parseTwoLines(area[0].text, area[1].text);
+                  } else if (area.length == 3) {
+                    information = MRZ.parseThreeLines(
+                        area[0].text, area[1].text, area[2].text);
+                  }
                 }
+              } catch (e) {
+                print(e);
               }
-              if (information != null) {
-                stopVideo();
-                if (!isFinished) {
-                  isFinished = true;
-                  ProfileData scannedData = ProfileData();
-                  print(information);
-                  scannedData.firstName = information.givenName;
-                  scannedData.lastName = information.surname;
-                  scannedData.nationality = information.nationality;
-                  scannedData.idNumber = information.passportNumber;
-                  cbNavigation(scannedData);
-                }
+
+              if (information.surname == '') {
+                information.surname = 'Not found';
+              }
+
+              if (information.givenName == '') {
+                information.givenName = 'Not found';
+              }
+
+              if (information.nationality == '') {
+                information.nationality = 'Not found';
+              }
+
+              if (information.passportNumber == '') {
+                information.passportNumber = 'Not found';
+              }
+
+              stopVideo();
+              if (!isFinished) {
+                isFinished = true;
+                ProfileData scannedData = ProfileData();
+
+                scannedData.firstName = information.givenName;
+                scannedData.lastName = information.surname;
+                scannedData.nationality = information.nationality;
+                scannedData.idNumber = information.passportNumber;
+                cbNavigation(scannedData);
               }
             }
 
@@ -307,6 +467,22 @@ class MobileCamera {
     });
   }
 
+  void startVideo() async {
+    barcodeResults = null;
+    mrzLines = null;
+    documentResults = null;
+
+    isFinished = false;
+
+    cbRefreshUi();
+
+    if (kIsWeb) {
+      webCamera();
+    } else {
+      mobileCamera();
+    }
+  }
+
   Future<void> initCamera() async {
     try {
       WidgetsFlutterBinding.ensureInitialized();
@@ -320,6 +496,12 @@ class MobileCamera {
   }
 
   Widget getPreview() {
+    if (controller == null) {
+      return Container(
+        child: const Text('No camera available!'),
+      );
+    }
+
     return CameraPreview(controller!);
   }
 
