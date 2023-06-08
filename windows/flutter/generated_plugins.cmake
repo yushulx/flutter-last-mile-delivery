@@ -3,6 +3,9 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
+  flutter_barcode_sdk
+  flutter_document_scan_sdk
+  flutter_ocr_sdk
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST

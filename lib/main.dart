@@ -14,12 +14,20 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
+  Future<SharedPreferences> loadData() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await initBarcodeSDK();
+    await initMRZSDK();
+    await initDocumentSDK();
+    return prefs;
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Last Mile Delivery',
       home: FutureBuilder<SharedPreferences>(
-        future: SharedPreferences.getInstance(),
+        future: loadData(),
         builder:
             (BuildContext context, AsyncSnapshot<SharedPreferences> snapshot) {
           if (!snapshot.hasData) {
@@ -46,10 +54,9 @@ class MyApp extends StatelessWidget {
                 route = MaterialPageRoute(
                     builder: (context) => const ProfilePage());
               }
-
-              routes.add(route);
-              Navigator.pushReplacement(context, route);
             }
+            routes.add(route);
+            Navigator.pushReplacement(context, route);
           });
           return Container();
         },

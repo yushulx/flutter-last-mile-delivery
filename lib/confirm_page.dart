@@ -1,20 +1,31 @@
+import 'package:delivery/data/profile_data.dart';
+import 'package:delivery/utils.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'global.dart';
 import 'success_page.dart';
 
 class ConfirmPage extends StatefulWidget {
-  const ConfirmPage({super.key});
+  const ConfirmPage({super.key, required this.scannedData});
+  final ProfileData scannedData;
 
   @override
   State<ConfirmPage> createState() => _ConfirmPageState();
 }
 
 class _ConfirmPageState extends State<ConfirmPage> {
+  final _formKey = GlobalKey<FormState>();
   final _inputDecoration = const InputDecoration(
     filled: true,
     border: OutlineInputBorder(),
   );
+
+  Future<void> saveData() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('verified', true);
+    data.verified = true;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,137 +54,175 @@ class _ConfirmPageState extends State<ConfirmPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 SingleChildScrollView(
-                    child: Column(
-                  // mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    const SizedBox(
-                      height: 40,
-                    ),
-                    SizedBox(
-                        width: 300,
-                        height: 81,
-                        child: Row(children: [
-                          Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text('First Name *'),
-                                const SizedBox(
-                                  height: 10,
-                                ),
-                                SizedBox(
-                                  width: 140,
-                                  height: 48,
-                                  child: TextFormField(
-                                    decoration: _inputDecoration,
-                                    validator: (value) {
-                                      if (value == null || value.isEmpty) {
-                                        return 'Please enter your first name';
-                                      }
-                                      return null;
-                                    },
+                    child: Form(
+                        key: _formKey,
+                        child: Column(
+                          // mainAxisAlignment: MainAxisAlignment.center,
+                          children: <Widget>[
+                            const SizedBox(
+                              height: 40,
+                            ),
+                            SizedBox(
+                                width: 300,
+                                height: 81,
+                                child: Row(children: [
+                                  Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const Text('First Name *'),
+                                        const SizedBox(
+                                          height: 10,
+                                        ),
+                                        SizedBox(
+                                          width: 140,
+                                          height: 48,
+                                          child: TextFormField(
+                                            initialValue:
+                                                widget.scannedData.firstName,
+                                            decoration: _inputDecoration,
+                                            validator: (value) {
+                                              if (value == null ||
+                                                  value.isEmpty) {
+                                                return 'Please enter your first name';
+                                              }
+
+                                              widget.scannedData.firstName =
+                                                  value;
+                                              return null;
+                                            },
+                                          ),
+                                        ),
+                                      ]),
+                                  const SizedBox(
+                                    width: 20,
+                                  ),
+                                  Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const Text('Last Name *'),
+                                        const SizedBox(
+                                          height: 10,
+                                        ),
+                                        SizedBox(
+                                            width: 140,
+                                            height: 48,
+                                            child: TextFormField(
+                                              initialValue:
+                                                  widget.scannedData.lastName,
+                                              decoration: _inputDecoration,
+                                              validator: (value) {
+                                                if (value == null ||
+                                                    value.isEmpty) {
+                                                  return 'Please enter your last name';
+                                                }
+
+                                                widget.scannedData.lastName =
+                                                    value;
+                                                return null;
+                                              },
+                                            )),
+                                      ]),
+                                ])),
+                            const SizedBox(
+                              height: 10,
+                            ),
+                            Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('Nationality *'),
+                                  const SizedBox(
+                                    height: 10,
+                                  ),
+                                  SizedBox(
+                                      width: 300,
+                                      height: 48,
+                                      child: TextFormField(
+                                        initialValue:
+                                            widget.scannedData.nationality,
+                                        decoration: _inputDecoration,
+                                        validator: (value) {
+                                          if (value == null || value.isEmpty) {
+                                            return 'Please enter your email';
+                                          }
+                                          widget.scannedData.nationality =
+                                              value;
+                                          return null;
+                                        },
+                                      )),
+                                ]),
+                            const SizedBox(
+                              height: 10,
+                            ),
+                            Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('Identification Number *'),
+                                  const SizedBox(
+                                    height: 10,
+                                  ),
+                                  SizedBox(
+                                      width: 300,
+                                      height: 48,
+                                      child: TextFormField(
+                                        initialValue:
+                                            widget.scannedData.idNumber,
+                                        decoration: _inputDecoration,
+                                        validator: (value) {
+                                          if (value == null || value.isEmpty) {
+                                            return 'Please enter your password';
+                                          }
+                                          widget.scannedData.idNumber = value;
+                                          return null;
+                                        },
+                                      )),
+                                ]),
+                            const SizedBox(
+                              height: 67,
+                            ),
+                            SizedBox(
+                              width: 220,
+                              height: 52,
+                              child: MaterialButton(
+                                onPressed: () {
+                                  if (_formKey.currentState!.validate()) {
+                                    if (widget.scannedData.firstName!
+                                                .toLowerCase() ==
+                                            data.firstName!.toLowerCase() &&
+                                        widget.scannedData.lastName!
+                                                .toLowerCase() ==
+                                            data.lastName!.toLowerCase()) {
+                                      saveData();
+                                      MaterialPageRoute route =
+                                          MaterialPageRoute(
+                                        builder: (context) =>
+                                            const SuccessPage(),
+                                      );
+                                      routes.add(route);
+                                      Navigator.push(
+                                        context,
+                                        route,
+                                      );
+                                    } else {
+                                      showAlert(context, 'Error',
+                                          'Your personal information does not match the scanned document. Please try again.');
+                                    }
+                                  } else {
+                                    print('Form is not valid');
+                                  }
+                                },
+                                color: Colors.black,
+                                child: const Text(
+                                  'Confirm',
+                                  style: TextStyle(
+                                    color: Colors.white,
                                   ),
                                 ),
-                              ]),
-                          const SizedBox(
-                            width: 20,
-                          ),
-                          Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text('Last Name *'),
-                                const SizedBox(
-                                  height: 10,
-                                ),
-                                SizedBox(
-                                    width: 140,
-                                    height: 48,
-                                    child: TextFormField(
-                                      decoration: _inputDecoration,
-                                      validator: (value) {
-                                        if (value == null || value.isEmpty) {
-                                          return 'Please enter your last name';
-                                        }
-                                        return null;
-                                      },
-                                    )),
-                              ]),
-                        ])),
-                    const SizedBox(
-                      height: 10,
-                    ),
-                    Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('Nationality *'),
-                          const SizedBox(
-                            height: 10,
-                          ),
-                          SizedBox(
-                              width: 300,
-                              height: 48,
-                              child: TextFormField(
-                                decoration: _inputDecoration,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Please enter your email';
-                                  }
-                                  // Add more complex validation here if needed
-                                  return null;
-                                },
-                              )),
-                        ]),
-                    const SizedBox(
-                      height: 10,
-                    ),
-                    Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('Driver License Number *'),
-                          const SizedBox(
-                            height: 10,
-                          ),
-                          SizedBox(
-                              width: 300,
-                              height: 48,
-                              child: TextFormField(
-                                decoration: _inputDecoration,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Please enter your password';
-                                  }
-                                  // Add more complex validation here if needed
-                                  return null;
-                                },
-                              )),
-                        ]),
-                    const SizedBox(
-                      height: 67,
-                    ),
-                    SizedBox(
-                      width: 220,
-                      height: 52,
-                      child: MaterialButton(
-                        onPressed: () {
-                          MaterialPageRoute route = MaterialPageRoute(
-                            builder: (context) => const SuccessPage(),
-                          );
-                          routes.add(route);
-                          Navigator.push(
-                            context,
-                            route,
-                          );
-                        },
-                        color: Colors.black,
-                        child: const Text(
-                          'Confirm',
-                          style: TextStyle(
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                )),
+                              ),
+                            ),
+                          ],
+                        ))),
               ]),
         ));
   }

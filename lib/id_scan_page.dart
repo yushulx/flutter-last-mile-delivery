@@ -1,6 +1,6 @@
-import 'package:delivery/confirm_page.dart';
 import 'package:flutter/material.dart';
-
+import 'camera/camera_manager.dart';
+import 'confirm_page.dart';
 import 'global.dart';
 
 class IdScanPage extends StatefulWidget {
@@ -10,16 +10,73 @@ class IdScanPage extends StatefulWidget {
   State<IdScanPage> createState() => _IdScanPageState();
 }
 
-class _IdScanPageState extends State<IdScanPage> {
-  bool _isDriverLicense = true;
+class _IdScanPageState extends State<IdScanPage> with WidgetsBindingObserver {
+  late MobileCamera _mobileCamera;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+
+    _mobileCamera = MobileCamera(
+        context: context,
+        cbRefreshUi: refreshUI,
+        cbIsMounted: isMounted,
+        cbNavigation: navigation,
+        scanType: ScanType.id);
+    _mobileCamera.initState();
+  }
+
+  void navigation(dynamic result) {
+    MaterialPageRoute route = MaterialPageRoute(
+      builder: (context) => ConfirmPage(
+        scannedData: result,
+      ),
+    );
+    routes.add(route);
+    Navigator.push(
+      context,
+      route,
+    ).then((value) => _mobileCamera.initCamera());
+  }
+
+  void refreshUI() {
+    setState(() {});
+  }
+
+  bool isMounted() {
+    return mounted;
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _mobileCamera.stopVideo();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (_mobileCamera.controller == null ||
+        !_mobileCamera.controller!.value.isInitialized) {
+      return;
+    }
+
+    if (state == AppLifecycleState.inactive) {
+      _mobileCamera.controller!.dispose();
+    } else if (state == AppLifecycleState.resumed) {
+      _mobileCamera.toggleCamera(0);
+    }
+  }
 
   Widget getButtons() {
-    if (_isDriverLicense) {
+    if (_mobileCamera.isDriverLicense) {
       return Row(children: [
         GestureDetector(
             onTap: () {
               setState(() {
-                _isDriverLicense = true;
+                _mobileCamera.isDriverLicense = true;
+                _mobileCamera.mrzLines = null;
               });
             },
             child: SizedBox(
@@ -57,7 +114,8 @@ class _IdScanPageState extends State<IdScanPage> {
         GestureDetector(
             onTap: () {
               setState(() {
-                _isDriverLicense = false;
+                _mobileCamera.isDriverLicense = false;
+                _mobileCamera.barcodeResults = null;
               });
             },
             child: SizedBox(
@@ -92,7 +150,7 @@ class _IdScanPageState extends State<IdScanPage> {
         GestureDetector(
             onTap: () {
               setState(() {
-                _isDriverLicense = true;
+                _mobileCamera.isDriverLicense = true;
               });
             },
             child: SizedBox(
@@ -124,7 +182,7 @@ class _IdScanPageState extends State<IdScanPage> {
         GestureDetector(
             onTap: () {
               setState(() {
-                _isDriverLicense = false;
+                _mobileCamera.isDriverLicense = false;
               });
             },
             child: SizedBox(
@@ -188,21 +246,45 @@ class _IdScanPageState extends State<IdScanPage> {
           ),
           body: Stack(
             children: <Widget>[
+              if (_mobileCamera.controller != null &&
+                  _mobileCamera.previewSize != null)
+                Positioned(
+                  top: 0,
+                  right: 0,
+                  left: 0,
+                  bottom: 50,
+                  child: FittedBox(
+                    fit: BoxFit.cover,
+                    child: Stack(
+                      children: [
+                        if (_mobileCamera.controller != null &&
+                            _mobileCamera.previewSize != null)
+                          SizedBox(
+                              width: MediaQuery.of(context).size.width <
+                                      MediaQuery.of(context).size.height
+                                  ? _mobileCamera.previewSize!.height
+                                  : _mobileCamera.previewSize!.width,
+                              height: MediaQuery.of(context).size.width <
+                                      MediaQuery.of(context).size.height
+                                  ? _mobileCamera.previewSize!.width
+                                  : _mobileCamera.previewSize!.height,
+                              child: _mobileCamera.getPreview()),
+                        Positioned(
+                          top: 0.0,
+                          right: 0.0,
+                          bottom: 0,
+                          left: 0.0,
+                          child: createOverlay(
+                              _mobileCamera.barcodeResults,
+                              _mobileCamera.mrzLines,
+                              _mobileCamera.documentResults),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               Positioned(bottom: 0, child: getButtons()),
             ],
-          ),
-          floatingActionButton: FloatingActionButton(
-            child: const Icon(Icons.done),
-            onPressed: () {
-              MaterialPageRoute route = MaterialPageRoute(
-                builder: (context) => const ConfirmPage(),
-              );
-              routes.add(route);
-              Navigator.push(
-                context,
-                route,
-              );
-            },
           ),
         ));
   }

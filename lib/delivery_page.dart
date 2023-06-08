@@ -5,19 +5,96 @@ import 'package:flutter/material.dart';
 import 'data/order_data.dart';
 import 'global.dart';
 
+import 'dart:ui' as ui;
+
+class ImagePainter extends CustomPainter {
+  ImagePainter(this.image);
+  ui.Image? image;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.blue
+      ..strokeWidth = 5
+      ..style = PaintingStyle.stroke;
+
+    if (image != null) {
+      canvas.drawImage(image!, Offset.zero, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(ImagePainter oldDelegate) => true;
+}
+
 class DeliveryPage extends StatefulWidget {
-  const DeliveryPage({super.key});
+  const DeliveryPage({super.key, required this.order});
+
+  final OrderData order;
 
   @override
   State<DeliveryPage> createState() => _DeliveryPageState();
 }
 
 class _DeliveryPageState extends State<DeliveryPage> {
-  OrderData order = OrderData(
-      id: '13134324',
-      address: '9337 Hagenes Plains Sutite 990',
-      time: '08:30 am - 12:00 am',
-      status: 'Assigned');
+  ui.Image? normalizedUiImage;
+
+  Widget createCustomImage(BuildContext context, ui.Image image) {
+    return FittedBox(
+        fit: BoxFit.contain,
+        child: SizedBox(
+            width: image.width.toDouble(),
+            height: image.height.toDouble(),
+            child: CustomPaint(
+              painter: ImagePainter(image),
+            )));
+  }
+
+  List<Widget> getDocImage() {
+    if (normalizedUiImage == null) {
+      return <Widget>[
+        const SizedBox(
+          height: 216,
+        ),
+        SizedBox(
+          width: 240,
+          height: 52,
+          child: MaterialButton(
+            color: Colors.black,
+            onPressed: () async {
+              MaterialPageRoute route = MaterialPageRoute(
+                builder: (context) => const DocScanPage(),
+              );
+              routes.add(route);
+              var result = await Navigator.push(
+                context,
+                route,
+              );
+
+              if (result != null) {
+                setState(() {
+                  normalizedUiImage = result;
+                });
+              }
+            },
+            child: const Text(
+              'Scan Delivery Document',
+              style: TextStyle(
+                color: Colors.white,
+              ),
+            ),
+          ),
+        )
+      ];
+    } else {
+      return <Widget>[
+        const SizedBox(
+          height: 116,
+        ),
+        createCustomImage(context, normalizedUiImage!),
+      ];
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -60,7 +137,7 @@ class _DeliveryPageState extends State<DeliveryPage> {
                       children: [
                         const SizedBox(width: 20),
                         Text(
-                          'Order ID:${order.id}',
+                          'Order ID:${widget.order.id}',
                           style: const TextStyle(
                             color: Colors.black,
                             fontSize: 16,
@@ -84,7 +161,7 @@ class _DeliveryPageState extends State<DeliveryPage> {
                           height: 25,
                         ),
                         Text(
-                          '${order.address}',
+                          '${widget.order.address}',
                           style: const TextStyle(
                             color: Colors.black,
                             fontSize: 16,
@@ -105,7 +182,7 @@ class _DeliveryPageState extends State<DeliveryPage> {
                           height: 25,
                         ),
                         Text(
-                          'Delivery ${order.time}',
+                          'Delivery ${widget.order.time}',
                           style: const TextStyle(
                             color: Colors.black,
                             fontSize: 16,
@@ -148,39 +225,13 @@ class _DeliveryPageState extends State<DeliveryPage> {
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.start,
-                    children: <Widget>[
-                      const SizedBox(
-                        height: 216,
-                      ),
-                      SizedBox(
-                        width: 240,
-                        height: 52,
-                        child: MaterialButton(
-                          color: Colors.black,
-                          onPressed: () {
-                            MaterialPageRoute route = MaterialPageRoute(
-                              builder: (context) => const DocScanPage(),
-                            );
-                            routes.add(route);
-                            Navigator.push(
-                              context,
-                              route,
-                            );
-                          },
-                          child: const Text(
-                            'Scan Delivery Document',
-                            style: TextStyle(
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+                    children: getDocImage(),
                   ),
                 ),
               ),
               GestureDetector(
                   onTap: () {
+                    widget.order.status = 'Finished';
                     MaterialPageRoute route = MaterialPageRoute(
                       builder: (context) => const FinalPage(),
                     );

@@ -1,4 +1,5 @@
 import 'package:delivery/barcode_scan_page.dart';
+import 'package:delivery/delivery_page.dart';
 import 'package:delivery/profile_page.dart';
 import 'package:delivery/global.dart';
 import 'package:flutter/material.dart';
@@ -13,24 +14,6 @@ class OrderPage extends StatefulWidget {
 }
 
 class _OrderPageState extends State<OrderPage> {
-  final List<OrderData> orders = [
-    OrderData(
-        id: '13134324',
-        address: '9337 Hagenes Plains Sutite 990',
-        time: '08:30 am - 12:00 am',
-        status: 'Assigned'),
-    OrderData(
-        id: '34253454',
-        address: '9337 Hagenes Plains Sutite 990',
-        time: '08:30 am - 12:00 am',
-        status: 'Started'),
-    OrderData(
-        id: '56578835',
-        address: 'San Francisco. CA. United States',
-        time: '01:30 pm - 02:00 pm',
-        status: 'Finished')
-  ];
-
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -65,15 +48,16 @@ class _OrderPageState extends State<OrderPage> {
             ),
             actions: [
               IconButton(
-                onPressed: () {
+                onPressed: () async {
                   MaterialPageRoute route = MaterialPageRoute(
                     builder: (context) => const BarcodeScanPage(),
                   );
                   routes.add(route);
-                  Navigator.push(
+                  await Navigator.push(
                     context,
                     route,
                   );
+                  setState(() {});
                 },
                 icon: Image.asset(
                   "images/icon-scan-barcode.png",
@@ -129,85 +113,98 @@ class MyCustomWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
-    return Column(
-      children: [
-        Container(
-          width: screenWidth,
-          height: 149,
-          decoration: const BoxDecoration(
-            color: Color(0xffF5F5F5),
-          ),
-          child: Column(
-            children: <Widget>[
-              const SizedBox(
-                height: 22,
+    return GestureDetector(
+        onTap: () {
+          MaterialPageRoute route = MaterialPageRoute(
+            builder: (context) => DeliveryPage(
+              order: order,
+            ),
+          );
+          routes.add(route);
+          Navigator.push(
+            context,
+            route,
+          );
+        },
+        child: Column(
+          children: [
+            Container(
+              width: screenWidth,
+              height: 149,
+              decoration: const BoxDecoration(
+                color: Color(0xffF5F5F5),
               ),
-              Row(
-                children: [
-                  const SizedBox(width: 20),
-                  Text(
-                    'Order ID:${order.id}',
-                    style: const TextStyle(
-                      color: Colors.black,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+              child: Column(
+                children: <Widget>[
+                  const SizedBox(
+                    height: 22,
                   ),
-                  SizedBox(
-                    width: screenWidth - 278,
+                  Row(
+                    children: [
+                      const SizedBox(width: 20),
+                      Text(
+                        'Order ID:${order.id}',
+                        style: const TextStyle(
+                          color: Colors.black,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(
+                        width: screenWidth - 278,
+                      ),
+                      showStatus(),
+                    ],
                   ),
-                  showStatus(),
+                  const SizedBox(
+                    height: 22,
+                  ),
+                  Row(
+                    children: [
+                      const SizedBox(width: 16),
+                      Image.asset(
+                        "images/icon-address.png",
+                        width: 25,
+                        height: 25,
+                      ),
+                      Text(
+                        '${order.address}',
+                        style: const TextStyle(
+                          color: Colors.black,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(
+                    height: 22,
+                  ),
+                  Row(
+                    children: [
+                      const SizedBox(width: 16),
+                      Image.asset(
+                        "images/icon-time.png",
+                        width: 25,
+                        height: 25,
+                      ),
+                      Text(
+                        'Delivery ${order.time}',
+                        style: const TextStyle(
+                          color: Colors.black,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
-              const SizedBox(
-                height: 22,
-              ),
-              Row(
-                children: [
-                  const SizedBox(width: 16),
-                  Image.asset(
-                    "images/icon-address.png",
-                    width: 25,
-                    height: 25,
-                  ),
-                  Text(
-                    '${order.address}',
-                    style: const TextStyle(
-                      color: Colors.black,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(
-                height: 22,
-              ),
-              Row(
-                children: [
-                  const SizedBox(width: 16),
-                  Image.asset(
-                    "images/icon-time.png",
-                    width: 25,
-                    height: 25,
-                  ),
-                  Text(
-                    'Delivery ${order.time}',
-                    style: const TextStyle(
-                      color: Colors.black,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(
-          height: 5,
-        )
-      ],
-    );
+            ),
+            const SizedBox(
+              height: 5,
+            )
+          ],
+        ));
   }
 }
