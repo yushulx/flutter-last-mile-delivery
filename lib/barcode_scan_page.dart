@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'camera/mobile_camera.dart';
+import 'delivery_page.dart';
 import 'global.dart';
 
 class BarcodeScanPage extends StatefulWidget {
@@ -28,9 +29,15 @@ class _BarcodeScanPageState extends State<BarcodeScanPage>
     _mobileCamera.initState();
   }
 
-  void navigation() {
-    routes.removeLast();
-    Navigator.of(context).pop();
+  void navigation(dynamic order) {
+    MaterialPageRoute route = MaterialPageRoute(
+      builder: (context) => DeliveryPage(order: order),
+    );
+    routes.add(route);
+    Navigator.push(
+      context,
+      route,
+    ).then((value) => _mobileCamera.initCamera());
   }
 
   void refreshUI() {

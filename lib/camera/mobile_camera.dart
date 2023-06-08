@@ -110,7 +110,10 @@ class MobileCamera {
               Map<String, String>? map = parseLicense(results[0].text);
               if (map != null) {
                 stopVideo();
-                cbNavigation();
+                if (!isFinished) {
+                  isFinished = true;
+                  cbNavigation();
+                }
               }
             }
 
@@ -168,12 +171,12 @@ class MobileCamera {
           barcodeResults = results;
 
           if (results.isNotEmpty) {
+            stopVideo();
             if (!isFinished) {
               isFinished = true;
               var random = Random();
-              var element = mockOrders[random.nextInt(mockOrders.length)];
-              orders.add(element);
-              cbNavigation();
+              var element = orders[random.nextInt(orders.length)];
+              cbNavigation(element);
             }
           }
 

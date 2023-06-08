@@ -231,6 +231,7 @@ class _DeliveryPageState extends State<DeliveryPage> {
               ),
               GestureDetector(
                   onTap: () {
+                    widget.order.status = 'Finished';
                     MaterialPageRoute route = MaterialPageRoute(
                       builder: (context) => const FinalPage(),
                     );

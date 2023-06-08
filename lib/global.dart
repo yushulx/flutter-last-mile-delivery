@@ -18,8 +18,7 @@ FlutterDocumentScanSdk docScanner = FlutterDocumentScanSdk();
 int NOT_CHECKED = -10;
 int licenseStatus = NOT_CHECKED;
 
-List<OrderData> orders = [];
-final List<OrderData> mockOrders = [
+List<OrderData> orders = [
   OrderData(
       id: '13134324',
       address: '9337 Hagenes Plains Sutite 990',
@@ -29,12 +28,12 @@ final List<OrderData> mockOrders = [
       id: '34253454',
       address: '9337 Hagenes Plains Sutite 990',
       time: '08:30 am - 12:00 am',
-      status: 'Started'),
+      status: 'Assigned'),
   OrderData(
       id: '56578835',
       address: 'San Francisco. CA. United States',
       time: '01:30 pm - 02:00 pm',
-      status: 'Finished')
+      status: 'Assigned')
 ];
 
 Future<void> initBarcodeSDK() async {

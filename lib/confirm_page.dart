@@ -153,7 +153,7 @@ class _ConfirmPageState extends State<ConfirmPage> {
                                       width: 300,
                                       height: 48,
                                       child: TextFormField(
-                                        initialValue: 'A1234567',
+                                        initialValue: 'ZZ1234567',
                                         decoration: _inputDecoration,
                                         validator: (value) {
                                           if (value == null || value.isEmpty) {
