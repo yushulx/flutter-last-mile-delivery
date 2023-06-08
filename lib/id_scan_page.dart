@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:camera/camera.dart';
 import 'camera/mobile_camera.dart';
 import 'confirm_page.dart';
 import 'global.dart';
@@ -273,8 +272,10 @@ class _IdScanPageState extends State<IdScanPage> with WidgetsBindingObserver {
                           right: 0.0,
                           bottom: 0,
                           left: 0.0,
-                          child: createOverlay(_mobileCamera.barcodeResults,
-                              _mobileCamera.mrzLines),
+                          child: createOverlay(
+                              _mobileCamera.barcodeResults,
+                              _mobileCamera.mrzLines,
+                              _mobileCamera.documentResults),
                         ),
                       ],
                     ),

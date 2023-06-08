@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_barcode_sdk/dynamsoft_barcode.dart';
 import 'package:flutter_barcode_sdk/flutter_barcode_sdk.dart';
+import 'package:flutter_document_scan_sdk/document_result.dart';
 import 'package:flutter_document_scan_sdk/flutter_document_scan_sdk.dart';
+import 'package:flutter_document_scan_sdk/template.dart';
 import 'package:flutter_ocr_sdk/flutter_ocr_sdk.dart';
 import 'package:flutter_ocr_sdk/mrz_line.dart';
 
@@ -51,6 +53,7 @@ Future<void> initMRZSDK() async {
 Future<void> initDocumentSDK() async {
   await docScanner.init(
       'DLS2eyJoYW5kc2hha2VDb2RlIjoiMjAwMDAxLTE2NDk4Mjk3OTI2MzUiLCJvcmdhbml6YXRpb25JRCI6IjIwMDAwMSIsInNlc3Npb25QYXNzd29yZCI6IndTcGR6Vm05WDJrcEQ5YUoifQ==');
+  await docScanner.setParameters(Template.color);
 }
 
 List<BarcodeResult> rotate90barcode(List<BarcodeResult> input, int height) {
@@ -121,18 +124,49 @@ List<List<MrzLine>> rotate90mrz(List<List<MrzLine>> input, int height) {
   return output;
 }
 
-Widget createOverlay(
-    List<BarcodeResult>? barcodeResults, List<List<MrzLine>>? mrzResults) {
+List<DocumentResult> rotate90document(List<DocumentResult>? input, int height) {
+  if (input == null) {
+    return [];
+  }
+
+  List<DocumentResult> output = [];
+  for (DocumentResult result in input) {
+    double x1 = result.points[0].dx;
+    double x2 = result.points[1].dx;
+    double x3 = result.points[2].dx;
+    double x4 = result.points[3].dx;
+    double y1 = result.points[0].dy;
+    double y2 = result.points[1].dy;
+    double y3 = result.points[2].dy;
+    double y4 = result.points[3].dy;
+
+    List<Offset> points = [
+      Offset(height - y1, x1),
+      Offset(height - y2, x2),
+      Offset(height - y3, x3),
+      Offset(height - y4, x4)
+    ];
+    DocumentResult newResult = DocumentResult(result.confidence, points, []);
+
+    output.add(newResult);
+  }
+
+  return output;
+}
+
+Widget createOverlay(List<BarcodeResult>? barcodeResults,
+    List<List<MrzLine>>? mrzResults, List<DocumentResult>? documentResults) {
   return CustomPaint(
-    painter: OverlayPainter(barcodeResults, mrzResults),
+    painter: OverlayPainter(barcodeResults, mrzResults, documentResults),
   );
 }
 
 class OverlayPainter extends CustomPainter {
   List<BarcodeResult>? barcodeResults;
   List<List<MrzLine>>? mrzResults;
+  List<DocumentResult>? documentResults;
 
-  OverlayPainter(this.barcodeResults, this.mrzResults);
+  OverlayPainter(this.barcodeResults, this.mrzResults, this.documentResults);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -189,6 +223,15 @@ class OverlayPainter extends CustomPainter {
           canvas.drawLine(Offset(line.x4.toDouble(), line.y4.toDouble()),
               Offset(line.x1.toDouble(), line.y1.toDouble()), paint);
         }
+      }
+    }
+
+    if (documentResults != null) {
+      for (var result in documentResults!) {
+        canvas.drawLine(result.points[0], result.points[1], paint);
+        canvas.drawLine(result.points[1], result.points[2], paint);
+        canvas.drawLine(result.points[2], result.points[3], paint);
+        canvas.drawLine(result.points[3], result.points[0], paint);
       }
     }
   }

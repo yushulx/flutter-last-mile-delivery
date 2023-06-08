@@ -5,6 +5,28 @@ import 'package:flutter/material.dart';
 import 'data/order_data.dart';
 import 'global.dart';
 
+import 'dart:ui' as ui;
+
+class ImagePainter extends CustomPainter {
+  ImagePainter(this.image);
+  ui.Image? image;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.blue
+      ..strokeWidth = 5
+      ..style = PaintingStyle.stroke;
+
+    if (image != null) {
+      canvas.drawImage(image!, Offset.zero, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(ImagePainter oldDelegate) => true;
+}
+
 class DeliveryPage extends StatefulWidget {
   const DeliveryPage({super.key, required this.order});
 
@@ -15,6 +37,65 @@ class DeliveryPage extends StatefulWidget {
 }
 
 class _DeliveryPageState extends State<DeliveryPage> {
+  ui.Image? normalizedUiImage;
+
+  Widget createCustomImage(BuildContext context, ui.Image image) {
+    return FittedBox(
+        fit: BoxFit.contain,
+        child: SizedBox(
+            width: image.width.toDouble(),
+            height: image.height.toDouble(),
+            child: CustomPaint(
+              painter: ImagePainter(image),
+            )));
+  }
+
+  List<Widget> getDocImage() {
+    if (normalizedUiImage == null) {
+      return <Widget>[
+        const SizedBox(
+          height: 216,
+        ),
+        SizedBox(
+          width: 240,
+          height: 52,
+          child: MaterialButton(
+            color: Colors.black,
+            onPressed: () async {
+              MaterialPageRoute route = MaterialPageRoute(
+                builder: (context) => const DocScanPage(),
+              );
+              routes.add(route);
+              var result = await Navigator.push(
+                context,
+                route,
+              );
+
+              if (result != null) {
+                setState(() {
+                  normalizedUiImage = result;
+                });
+              }
+            },
+            child: const Text(
+              'Scan Delivery Document',
+              style: TextStyle(
+                color: Colors.white,
+              ),
+            ),
+          ),
+        )
+      ];
+    } else {
+      return <Widget>[
+        const SizedBox(
+          height: 116,
+        ),
+        createCustomImage(context, normalizedUiImage!),
+      ];
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
@@ -144,34 +225,7 @@ class _DeliveryPageState extends State<DeliveryPage> {
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.start,
-                    children: <Widget>[
-                      const SizedBox(
-                        height: 216,
-                      ),
-                      SizedBox(
-                        width: 240,
-                        height: 52,
-                        child: MaterialButton(
-                          color: Colors.black,
-                          onPressed: () {
-                            MaterialPageRoute route = MaterialPageRoute(
-                              builder: (context) => const DocScanPage(),
-                            );
-                            routes.add(route);
-                            Navigator.push(
-                              context,
-                              route,
-                            );
-                          },
-                          child: const Text(
-                            'Scan Delivery Document',
-                            style: TextStyle(
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+                    children: getDocImage(),
                   ),
                 ),
               ),

@@ -1,6 +1,3 @@
-import 'dart:math';
-
-import 'package:delivery/delivery_page.dart';
 import 'package:flutter/material.dart';
 
 import 'camera/mobile_camera.dart';
@@ -32,9 +29,6 @@ class _BarcodeScanPageState extends State<BarcodeScanPage>
   }
 
   void navigation() {
-    var random = Random();
-    var element = mockOrders[random.nextInt(mockOrders.length)];
-    orders.add(element);
     routes.removeLast();
     Navigator.of(context).pop();
   }
@@ -121,8 +115,10 @@ class _BarcodeScanPageState extends State<BarcodeScanPage>
                           right: 0.0,
                           bottom: 0,
                           left: 0.0,
-                          child: createOverlay(_mobileCamera.barcodeResults,
-                              _mobileCamera.mrzLines),
+                          child: createOverlay(
+                              _mobileCamera.barcodeResults,
+                              _mobileCamera.mrzLines,
+                              _mobileCamera.documentResults),
                         ),
                       ],
                     ),

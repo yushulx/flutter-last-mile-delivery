@@ -138,10 +138,10 @@ packages:
     dependency: "direct main"
     description:
       name: flutter_document_scan_sdk
-      sha256: "94e1648b0a3f8131ee285530a6e56975be1fd95755920acd2d7d59a69ff78f35"
+      sha256: "9b13e920ba7993e2a82bd187930276297c421b92df0a703763122316a86ec203"
       url: "https://pub.dev"
     source: hosted
-    version: "1.0.1"
+    version: "1.0.2"
   flutter_lints:
     dependency: "direct dev"
     description:

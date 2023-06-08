@@ -1,4 +1,3 @@
-import 'package:delivery/delivery_page.dart';
 import 'package:flutter/material.dart';
 
 import 'camera/mobile_camera.dart';
@@ -28,9 +27,9 @@ class _DocScanPageState extends State<DocScanPage> with WidgetsBindingObserver {
     _mobileCamera.initState();
   }
 
-  void navigation() {
+  void navigation(dynamic result) {
     routes.removeLast();
-    Navigator.of(context).pop();
+    Navigator.of(context).pop(result);
   }
 
   void refreshUI() {
@@ -115,8 +114,10 @@ class _DocScanPageState extends State<DocScanPage> with WidgetsBindingObserver {
                           right: 0.0,
                           bottom: 0,
                           left: 0.0,
-                          child: createOverlay(_mobileCamera.barcodeResults,
-                              _mobileCamera.mrzLines),
+                          child: createOverlay(
+                              _mobileCamera.barcodeResults,
+                              _mobileCamera.mrzLines,
+                              _mobileCamera.documentResults),
                         ),
                       ],
                     ),
