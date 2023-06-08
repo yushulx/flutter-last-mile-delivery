@@ -9,6 +9,7 @@ import 'package:flutter_ocr_sdk/mrz_line.dart';
 
 import 'data/order_data.dart';
 import 'data/profile_data.dart';
+import 'utils.dart';
 
 List<MaterialPageRoute> routes = [];
 ProfileData data = ProfileData();
@@ -237,4 +238,22 @@ class OverlayPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(OverlayPainter oldDelegate) => true;
+}
+
+List<DocumentResult> filterResults(
+    List<DocumentResult>? input, int width, int height) {
+  if (input == null) {
+    return [];
+  }
+  int imageArea = width * height;
+
+  List<DocumentResult> output = [];
+  for (DocumentResult result in input) {
+    if (calculateArea(result.points[0], result.points[1], result.points[2],
+            result.points[3]) >
+        imageArea / 2) {
+      output.add(result);
+    }
+  }
+  return output;
 }

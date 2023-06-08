@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'dart:ui';
 
+import 'package:delivery/data/profile_data.dart';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter_barcode_sdk/dynamsoft_barcode.dart';
@@ -11,6 +12,8 @@ import 'package:flutter_ocr_sdk/mrz_line.dart';
 import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
+import 'package:flutter_ocr_sdk/mrz_parser.dart';
+import 'package:flutter_ocr_sdk/mrz_result.dart';
 
 import '../data/driver_license.dart';
 import '../global.dart';
@@ -142,10 +145,28 @@ class MobileCamera {
             mrzLines = results;
             cbRefreshUi();
             if (results.isNotEmpty) {
-              stopVideo();
-              if (!isFinished) {
-                isFinished = true;
-                cbNavigation();
+              MrzResult? information;
+              for (List<MrzLine> area in results) {
+                if (area.length == 2) {
+                  information = MRZ.parseTwoLines(area[0].text, area[1].text);
+                  print(information);
+                } else if (area.length == 3) {
+                  information = MRZ.parseThreeLines(
+                      area[0].text, area[1].text, area[2].text);
+                }
+              }
+              if (information != null) {
+                stopVideo();
+                if (!isFinished) {
+                  isFinished = true;
+                  ProfileData scannedData = ProfileData();
+                  print(information);
+                  scannedData.firstName = information.givenName;
+                  scannedData.lastName = information.surname;
+                  scannedData.nationality = information.nationality;
+                  scannedData.idNumber = information.passportNumber;
+                  cbNavigation(scannedData);
+                }
               }
             }
 
@@ -192,6 +213,12 @@ class MobileCamera {
                 format)
             .then((results) {
           if (!cbIsMounted()) return;
+          results = filterResults(
+              results, availableImage.width, availableImage.height);
+          if (results.isEmpty) {
+            _isScanAvailable = true;
+            return;
+          }
           if (MediaQuery.of(context).size.width <
               MediaQuery.of(context).size.height) {
             if (Platform.isAndroid) {
@@ -200,7 +227,7 @@ class MobileCamera {
           }
           documentResults = results;
 
-          if (results != null && results.isNotEmpty) {
+          if (results.isNotEmpty) {
             if (!isFinished) {
               isFinished = true;
 

@@ -4,6 +4,8 @@ class ProfileData {
   String? email;
   String? password;
   bool? verified;
+  String? nationality;
+  String? idNumber;
 
   ProfileData({
     this.firstName,
@@ -11,5 +13,7 @@ class ProfileData {
     this.email,
     this.password,
     this.verified,
+    this.nationality,
+    this.idNumber,
   });
 }

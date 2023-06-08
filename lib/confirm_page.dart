@@ -1,3 +1,5 @@
+import 'package:delivery/data/profile_data.dart';
+import 'package:delivery/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -5,7 +7,8 @@ import 'global.dart';
 import 'success_page.dart';
 
 class ConfirmPage extends StatefulWidget {
-  const ConfirmPage({super.key});
+  const ConfirmPage({super.key, required this.scannedData});
+  final ProfileData scannedData;
 
   @override
   State<ConfirmPage> createState() => _ConfirmPageState();
@@ -75,7 +78,8 @@ class _ConfirmPageState extends State<ConfirmPage> {
                                           width: 140,
                                           height: 48,
                                           child: TextFormField(
-                                            initialValue: data.firstName,
+                                            initialValue:
+                                                widget.scannedData.firstName,
                                             decoration: _inputDecoration,
                                             validator: (value) {
                                               if (value == null ||
@@ -102,7 +106,8 @@ class _ConfirmPageState extends State<ConfirmPage> {
                                             width: 140,
                                             height: 48,
                                             child: TextFormField(
-                                              initialValue: data.lastName,
+                                              initialValue:
+                                                  widget.scannedData.lastName,
                                               decoration: _inputDecoration,
                                               validator: (value) {
                                                 if (value == null ||
@@ -128,7 +133,8 @@ class _ConfirmPageState extends State<ConfirmPage> {
                                       width: 300,
                                       height: 48,
                                       child: TextFormField(
-                                        initialValue: 'USA',
+                                        initialValue:
+                                            widget.scannedData.nationality,
                                         decoration: _inputDecoration,
                                         validator: (value) {
                                           if (value == null || value.isEmpty) {
@@ -153,7 +159,8 @@ class _ConfirmPageState extends State<ConfirmPage> {
                                       width: 300,
                                       height: 48,
                                       child: TextFormField(
-                                        initialValue: 'ZZ1234567',
+                                        initialValue:
+                                            widget.scannedData.idNumber,
                                         decoration: _inputDecoration,
                                         validator: (value) {
                                           if (value == null || value.isEmpty) {
@@ -173,15 +180,27 @@ class _ConfirmPageState extends State<ConfirmPage> {
                               child: MaterialButton(
                                 onPressed: () {
                                   if (_formKey.currentState!.validate()) {
-                                    saveData();
-                                    MaterialPageRoute route = MaterialPageRoute(
-                                      builder: (context) => const SuccessPage(),
-                                    );
-                                    routes.add(route);
-                                    Navigator.push(
-                                      context,
-                                      route,
-                                    );
+                                    if (widget.scannedData.firstName!
+                                                .toLowerCase() ==
+                                            data.firstName!.toLowerCase() &&
+                                        widget.scannedData.lastName!
+                                                .toLowerCase() ==
+                                            data.lastName!.toLowerCase()) {
+                                      saveData();
+                                      MaterialPageRoute route =
+                                          MaterialPageRoute(
+                                        builder: (context) =>
+                                            const SuccessPage(),
+                                      );
+                                      routes.add(route);
+                                      Navigator.push(
+                                        context,
+                                        route,
+                                      );
+                                    } else {
+                                      showAlert(context, 'Error',
+                                          'Your personal information does not match the scanned document. Please try again.');
+                                    }
                                   } else {
                                     print('Form is not valid');
                                   }

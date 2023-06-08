@@ -27,9 +27,11 @@ class _IdScanPageState extends State<IdScanPage> with WidgetsBindingObserver {
     _mobileCamera.initState();
   }
 
-  void navigation() {
+  void navigation(dynamic result) {
     MaterialPageRoute route = MaterialPageRoute(
-      builder: (context) => const ConfirmPage(),
+      builder: (context) => ConfirmPage(
+        scannedData: result,
+      ),
     );
     routes.add(route);
     Navigator.push(
