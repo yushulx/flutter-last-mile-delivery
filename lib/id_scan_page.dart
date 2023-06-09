@@ -28,6 +28,8 @@ class _IdScanPageState extends State<IdScanPage> with WidgetsBindingObserver {
   }
 
   void navigation(dynamic result) {
+    routes.removeLast();
+    Navigator.of(context).pop();
     MaterialPageRoute route = MaterialPageRoute(
       builder: (context) => ConfirmPage(
         scannedData: result,
@@ -37,7 +39,7 @@ class _IdScanPageState extends State<IdScanPage> with WidgetsBindingObserver {
     Navigator.push(
       context,
       route,
-    ).then((value) => _mobileCamera.initCamera());
+    );
   }
 
   void refreshUI() {

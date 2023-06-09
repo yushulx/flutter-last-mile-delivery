@@ -30,6 +30,9 @@ class _BarcodeScanPageState extends State<BarcodeScanPage>
   }
 
   void navigation(dynamic order) {
+    routes.removeLast();
+    Navigator.of(context).pop();
+
     MaterialPageRoute route = MaterialPageRoute(
       builder: (context) => DeliveryPage(order: order),
     );
@@ -37,7 +40,7 @@ class _BarcodeScanPageState extends State<BarcodeScanPage>
     Navigator.push(
       context,
       route,
-    ).then((value) => _mobileCamera.initCamera());
+    );
   }
 
   void refreshUI() {

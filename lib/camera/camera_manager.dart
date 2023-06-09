@@ -55,7 +55,7 @@ class CameraManager {
     initCamera();
   }
 
-  void stopVideo() async {
+  Future<void> stopVideo() async {
     if (controller == null) return;
     if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
       await controller!.stopImageStream();
@@ -233,7 +233,6 @@ class CameraManager {
   void handleDriverLicense(List<BarcodeResult> results) {
     if (results.isNotEmpty) {
       Map<String, String>? map = parseLicense(results[0].text);
-      stopVideo();
       ProfileData scannedData = ProfileData();
       if (map['DAC'] == null || map['DAC'] == '') {
         scannedData.firstName = 'Not found';
@@ -300,7 +299,6 @@ class CameraManager {
         information.passportNumber = 'Not found';
       }
 
-      stopVideo();
       if (!isFinished) {
         isFinished = true;
         ProfileData scannedData = ProfileData();
@@ -316,7 +314,6 @@ class CameraManager {
 
   void handleBarcode(List<BarcodeResult> results) {
     if (results.isNotEmpty) {
-      stopVideo();
       if (!isFinished) {
         isFinished = true;
         var random = Random();
@@ -383,7 +380,7 @@ class CameraManager {
     }
   }
 
-  void mobileCamera() async {
+  Future<void> mobileCamera() async {
     await controller!.startImageStream((CameraImage availableImage) async {
       assert(defaultTargetPlatform == TargetPlatform.android ||
           defaultTargetPlatform == TargetPlatform.iOS);
@@ -422,30 +419,40 @@ class CameraManager {
             availableImage.planes[0].bytesPerRow,
             format);
       } else if (scanType == ScanType.document) {
-        processDocument(
-            [
-              availableImage.planes[0].bytes,
-              availableImage.planes[1].bytes,
-              availableImage.planes[2].bytes
-            ],
-            availableImage.width,
-            availableImage.height,
-            [
-              availableImage.planes[0].bytesPerRow,
-              availableImage.planes[1].bytesPerRow,
-              availableImage.planes[2].bytesPerRow
-            ],
-            format,
-            [
-              availableImage.planes[0].bytesPerPixel!,
-              availableImage.planes[1].bytesPerPixel!,
-              availableImage.planes[2].bytesPerPixel!
-            ]);
+        if (Platform.isAndroid) {
+          processDocument(
+              [
+                availableImage.planes[0].bytes,
+                availableImage.planes[1].bytes,
+                availableImage.planes[2].bytes
+              ],
+              availableImage.width,
+              availableImage.height,
+              [
+                availableImage.planes[0].bytesPerRow,
+                availableImage.planes[1].bytesPerRow,
+                availableImage.planes[2].bytesPerRow
+              ],
+              format,
+              [
+                availableImage.planes[0].bytesPerPixel!,
+                availableImage.planes[1].bytesPerPixel!,
+                availableImage.planes[2].bytesPerPixel!
+              ]);
+        } else if (Platform.isIOS) {
+          processDocument(
+              [availableImage.planes[0].bytes],
+              availableImage.width,
+              availableImage.height,
+              [availableImage.planes[0].bytesPerRow],
+              format,
+              []);
+        }
       }
     });
   }
 
-  void startVideo() async {
+  Future<void> startVideo() async {
     barcodeResults = null;
     mrzLines = null;
     documentResults = null;
