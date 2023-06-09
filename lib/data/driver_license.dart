@@ -75,13 +75,13 @@ Map<String, String> DLAbbrDesMap = {
   'DAD': 'Middle Name'
 };
 
-Map<String, String>? parseLicense(String content) {
+Map<String, String> parseLicense(String content) {
+  Map<String, String> out = {};
   List<String> lines = content.split('\n');
   if (lines.length < 4) {
-    return null;
+    return out;
   }
 
-  Map<String, String> out = {};
   List<String> abbrs = DLAbbrDesMap.keys.toList();
 
   lines.forEach((line) {

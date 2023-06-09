@@ -11,14 +11,14 @@ class DocScanPage extends StatefulWidget {
 }
 
 class _DocScanPageState extends State<DocScanPage> with WidgetsBindingObserver {
-  late MobileCamera _mobileCamera;
+  late CameraManager _mobileCamera;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
-    _mobileCamera = MobileCamera(
+    _mobileCamera = CameraManager(
         context: context,
         cbRefreshUi: refreshUI,
         cbIsMounted: isMounted,

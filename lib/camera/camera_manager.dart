@@ -26,7 +26,7 @@ import 'package:camera_platform_interface/camera_platform_interface.dart';
 
 enum ScanType { id, barcode, document }
 
-class MobileCamera {
+class CameraManager {
   BuildContext context;
   CameraController? controller;
   late List<CameraDescription> _cameras;
@@ -40,7 +40,7 @@ class MobileCamera {
   bool isFinished = false;
   StreamSubscription<FrameAvailabledEvent>? _frameAvailableStreamSubscription;
 
-  MobileCamera(
+  CameraManager(
       {required this.context,
       required this.cbRefreshUi,
       required this.cbIsMounted,
@@ -204,6 +204,239 @@ class MobileCamera {
     });
   }
 
+  void processDocument(List<Uint8List> bytes, int width, int height,
+      List<int> strides, int format, List<int> pixelStrides) {
+    docScanner
+        .detectBuffer(bytes[0], width, height, strides[0], format)
+        .then((results) {
+      if (!cbIsMounted()) return;
+      results = filterResults(results, width, height);
+      if (results.isEmpty) {
+        _isScanAvailable = true;
+        return;
+      }
+      if (MediaQuery.of(context).size.width <
+          MediaQuery.of(context).size.height) {
+        if (Platform.isAndroid) {
+          results = rotate90document(results, previewSize!.height.toInt());
+        }
+      }
+
+      documentResults = results;
+
+      if (results.isNotEmpty) {
+        if (!isFinished) {
+          isFinished = true;
+
+          Uint8List data = bytes[0];
+          int imageWidth = width;
+          int imageHeight = height;
+
+          if (format == ImagePixelFormat.IPF_NV21.index) {
+            List<Uint8List> planes = [];
+            for (int planeIndex = 0; planeIndex < 3; planeIndex++) {
+              Uint8List buffer;
+              int planeWidth;
+              int planeHeight;
+              if (planeIndex == 0) {
+                planeWidth = width;
+                planeHeight = height;
+              } else {
+                planeWidth = width ~/ 2;
+                planeHeight = height ~/ 2;
+              }
+
+              buffer = Uint8List(planeWidth * planeHeight);
+
+              int pixelStride = pixelStrides[planeIndex];
+              int rowStride = strides[0];
+              int index = 0;
+              for (int i = 0; i < planeHeight; i++) {
+                for (int j = 0; j < planeWidth; j++) {
+                  buffer[index++] =
+                      bytes[planeIndex][i * rowStride + j * pixelStride];
+                }
+              }
+
+              planes.add(buffer);
+            }
+
+            data = yuv420ToRgba8888(planes, imageWidth, imageHeight);
+            if (MediaQuery.of(context).size.width <
+                MediaQuery.of(context).size.height) {
+              if (Platform.isAndroid) {
+                data = rotate90Degrees(data, imageWidth, imageHeight);
+                imageWidth = height;
+                imageHeight = width;
+              }
+            }
+          }
+
+          docScanner
+              .normalizeBuffer(data, imageWidth, imageHeight, imageWidth * 4,
+                  ImagePixelFormat.IPF_ARGB_8888.index, results[0].points)
+              .then((normalizedImage) {
+            if (normalizedImage != null) {
+              decodeImageFromPixels(normalizedImage.data, normalizedImage.width,
+                  normalizedImage.height, PixelFormat.rgba8888, (ui.Image img) {
+                cbNavigation(img);
+              });
+            }
+          });
+        }
+      }
+
+      _isScanAvailable = true;
+    });
+  }
+
+  void processBarcode(
+      Uint8List bytes, int width, int height, int stride, int format) {
+    barcodeReader
+        .decodeImageBuffer(bytes, width, height, stride, format)
+        .then((results) {
+      if (!cbIsMounted()) return;
+      if (MediaQuery.of(context).size.width <
+          MediaQuery.of(context).size.height) {
+        if (Platform.isAndroid) {
+          results = rotate90barcode(results, previewSize!.height.toInt());
+        }
+      }
+      barcodeResults = results;
+
+      if (results.isNotEmpty) {
+        stopVideo();
+        if (!isFinished) {
+          isFinished = true;
+          var random = Random();
+          var element = orders[random.nextInt(orders.length)];
+          cbNavigation(element);
+        }
+      }
+
+      _isScanAvailable = true;
+    });
+  }
+
+  void processId(
+      Uint8List bytes, int width, int height, int stride, int format) {
+    if (isDriverLicense) {
+      barcodeReader
+          .decodeImageBuffer(bytes, width, height, stride, format)
+          .then((results) {
+        if (!cbIsMounted()) return;
+        if (MediaQuery.of(context).size.width <
+            MediaQuery.of(context).size.height) {
+          if (Platform.isAndroid) {
+            results = rotate90barcode(results, previewSize!.height.toInt());
+          }
+        }
+        barcodeResults = results;
+        // cbRefreshUi();
+        if (results.isNotEmpty) {
+          Map<String, String>? map = parseLicense(results[0].text);
+          stopVideo();
+          ProfileData scannedData = ProfileData();
+          if (map['DAC'] == null || map['DAC'] == '') {
+            scannedData.firstName = 'Not found';
+          } else {
+            scannedData.firstName = map['DAC'];
+          }
+
+          if (map['DCS'] == null || map['DCS'] == '') {
+            scannedData.lastName = 'Not found';
+          } else {
+            scannedData.lastName = map['DCS'];
+          }
+
+          if (map['DCG'] == null || map['DCG'] == '') {
+            scannedData.nationality = 'Not found';
+          } else {
+            scannedData.nationality = map['DCG'];
+          }
+
+          if (map['DAQ'] == null || map['DAQ'] == '') {
+            scannedData.idNumber = 'Not found';
+          } else {
+            scannedData.idNumber = map['DAQ'];
+          }
+
+          if (!isFinished) {
+            isFinished = true;
+
+            cbNavigation(scannedData);
+          }
+        }
+
+        _isScanAvailable = true;
+      });
+    } else {
+      barcodeResults = null;
+      cbRefreshUi();
+      mrzDetector
+          .recognizeByBuffer(bytes, width, height, stride, format)
+          .then((results) {
+        if (results == null || !cbIsMounted()) return;
+
+        if (MediaQuery.of(context).size.width <
+            MediaQuery.of(context).size.height) {
+          if (Platform.isAndroid) {
+            results = rotate90mrz(results, previewSize!.height.toInt());
+          }
+        }
+
+        mrzLines = results;
+        cbRefreshUi();
+        if (results.isNotEmpty) {
+          MrzResult information = MrzResult();
+
+          try {
+            for (List<MrzLine> area in results) {
+              if (area.length == 2) {
+                information = MRZ.parseTwoLines(area[0].text, area[1].text);
+              } else if (area.length == 3) {
+                information = MRZ.parseThreeLines(
+                    area[0].text, area[1].text, area[2].text);
+              }
+            }
+          } catch (e) {
+            print(e);
+          }
+
+          if (information.surname == '') {
+            information.surname = 'Not found';
+          }
+
+          if (information.givenName == '') {
+            information.givenName = 'Not found';
+          }
+
+          if (information.nationality == '') {
+            information.nationality = 'Not found';
+          }
+
+          if (information.passportNumber == '') {
+            information.passportNumber = 'Not found';
+          }
+
+          stopVideo();
+          if (!isFinished) {
+            isFinished = true;
+            ProfileData scannedData = ProfileData();
+
+            scannedData.firstName = information.givenName;
+            scannedData.lastName = information.surname;
+            scannedData.nationality = information.nationality;
+            scannedData.idNumber = information.passportNumber;
+            cbNavigation(scannedData);
+          }
+        }
+
+        _isScanAvailable = true;
+      });
+    }
+  }
+
   void mobileCamera() async {
     await controller!.startImageStream((CameraImage availableImage) async {
       assert(defaultTargetPlatform == TargetPlatform.android ||
@@ -229,239 +462,39 @@ class MobileCamera {
       _isScanAvailable = false;
 
       if (scanType == ScanType.id) {
-        if (isDriverLicense) {
-          mrzLines = null;
-          cbRefreshUi();
-          barcodeReader
-              .decodeImageBuffer(
-                  availableImage.planes[0].bytes,
-                  availableImage.width,
-                  availableImage.height,
-                  availableImage.planes[0].bytesPerRow,
-                  format)
-              .then((results) {
-            if (!cbIsMounted()) return;
-            if (MediaQuery.of(context).size.width <
-                MediaQuery.of(context).size.height) {
-              if (Platform.isAndroid) {
-                results = rotate90barcode(results, previewSize!.height.toInt());
-              }
-            }
-            barcodeResults = results;
-            cbRefreshUi();
-            if (results.isNotEmpty) {
-              Map<String, String>? map = parseLicense(results[0].text);
-              if (map != null) {
-                stopVideo();
-                if (!isFinished) {
-                  isFinished = true;
-                  cbNavigation();
-                }
-              }
-            }
-
-            _isScanAvailable = true;
-          });
-        } else {
-          barcodeResults = null;
-          cbRefreshUi();
-          mrzDetector
-              .recognizeByBuffer(
-                  availableImage.planes[0].bytes,
-                  availableImage.width,
-                  availableImage.height,
-                  availableImage.planes[0].bytesPerRow,
-                  format)
-              .then((results) {
-            if (results == null || !cbIsMounted()) return;
-
-            if (MediaQuery.of(context).size.width <
-                MediaQuery.of(context).size.height) {
-              if (Platform.isAndroid) {
-                results = rotate90mrz(results, previewSize!.height.toInt());
-              }
-            }
-
-            mrzLines = results;
-            cbRefreshUi();
-            if (results.isNotEmpty) {
-              MrzResult information = MrzResult();
-
-              try {
-                for (List<MrzLine> area in results) {
-                  if (area.length == 2) {
-                    information = MRZ.parseTwoLines(area[0].text, area[1].text);
-                  } else if (area.length == 3) {
-                    information = MRZ.parseThreeLines(
-                        area[0].text, area[1].text, area[2].text);
-                  }
-                }
-              } catch (e) {
-                print(e);
-              }
-
-              if (information.surname == '') {
-                information.surname = 'Not found';
-              }
-
-              if (information.givenName == '') {
-                information.givenName = 'Not found';
-              }
-
-              if (information.nationality == '') {
-                information.nationality = 'Not found';
-              }
-
-              if (information.passportNumber == '') {
-                information.passportNumber = 'Not found';
-              }
-
-              stopVideo();
-              if (!isFinished) {
-                isFinished = true;
-                ProfileData scannedData = ProfileData();
-
-                scannedData.firstName = information.givenName;
-                scannedData.lastName = information.surname;
-                scannedData.nationality = information.nationality;
-                scannedData.idNumber = information.passportNumber;
-                cbNavigation(scannedData);
-              }
-            }
-
-            _isScanAvailable = true;
-          });
-        }
+        processId(
+            availableImage.planes[0].bytes,
+            availableImage.width,
+            availableImage.height,
+            availableImage.planes[0].bytesPerRow,
+            format);
       } else if (scanType == ScanType.barcode) {
-        barcodeReader
-            .decodeImageBuffer(
-                availableImage.planes[0].bytes,
-                availableImage.width,
-                availableImage.height,
-                availableImage.planes[0].bytesPerRow,
-                format)
-            .then((results) {
-          if (!cbIsMounted()) return;
-          if (MediaQuery.of(context).size.width <
-              MediaQuery.of(context).size.height) {
-            if (Platform.isAndroid) {
-              results = rotate90barcode(results, previewSize!.height.toInt());
-            }
-          }
-          barcodeResults = results;
-
-          if (results.isNotEmpty) {
-            stopVideo();
-            if (!isFinished) {
-              isFinished = true;
-              var random = Random();
-              var element = orders[random.nextInt(orders.length)];
-              cbNavigation(element);
-            }
-          }
-
-          _isScanAvailable = true;
-        });
+        processBarcode(
+            availableImage.planes[0].bytes,
+            availableImage.width,
+            availableImage.height,
+            availableImage.planes[0].bytesPerRow,
+            format);
       } else if (scanType == ScanType.document) {
-        docScanner
-            .detectBuffer(
-                availableImage.planes[0].bytes,
-                availableImage.width,
-                availableImage.height,
-                availableImage.planes[0].bytesPerRow,
-                format)
-            .then((results) {
-          if (!cbIsMounted()) return;
-          results = filterResults(
-              results, availableImage.width, availableImage.height);
-          if (results.isEmpty) {
-            _isScanAvailable = true;
-            return;
-          }
-          if (MediaQuery.of(context).size.width <
-              MediaQuery.of(context).size.height) {
-            if (Platform.isAndroid) {
-              results = rotate90document(results, previewSize!.height.toInt());
-            }
-          }
-          documentResults = results;
-
-          if (results.isNotEmpty) {
-            if (!isFinished) {
-              isFinished = true;
-
-              Uint8List data;
-              Uint8List imageBuffer = availableImage.planes[0].bytes;
-              int imageWidth = availableImage.width;
-              int imageHeight = availableImage.height;
-              if (format == ImagePixelFormat.IPF_NV21.index) {
-                List<Uint8List> planes = [];
-                for (int planeIndex = 0; planeIndex < 3; planeIndex++) {
-                  Uint8List buffer;
-                  int width;
-                  int height;
-                  if (planeIndex == 0) {
-                    width = availableImage.width;
-                    height = availableImage.height;
-                  } else {
-                    width = availableImage.width ~/ 2;
-                    height = availableImage.height ~/ 2;
-                  }
-
-                  buffer = Uint8List(width * height);
-
-                  int pixelStride =
-                      availableImage.planes[planeIndex].bytesPerPixel!;
-                  int rowStride = availableImage.planes[planeIndex].bytesPerRow;
-                  int index = 0;
-                  for (int i = 0; i < height; i++) {
-                    for (int j = 0; j < width; j++) {
-                      buffer[index++] = availableImage.planes[planeIndex]
-                          .bytes[i * rowStride + j * pixelStride];
-                    }
-                  }
-
-                  planes.add(buffer);
-                }
-
-                imageBuffer = planes[0];
-                data = yuv420ToRgba8888(planes, imageWidth, imageHeight);
-                if (MediaQuery.of(context).size.width <
-                    MediaQuery.of(context).size.height) {
-                  if (Platform.isAndroid) {
-                    data = rotate90Degrees(data, imageWidth, imageHeight);
-                    imageWidth = availableImage.height;
-                    imageHeight = availableImage.width;
-                  }
-                }
-              } else {
-                data = imageBuffer;
-              }
-
-              docScanner
-                  .normalizeBuffer(
-                      data,
-                      imageWidth,
-                      imageHeight,
-                      imageWidth * 4,
-                      ImagePixelFormat.IPF_ARGB_8888.index,
-                      results[0].points)
-                  .then((normalizedImage) {
-                if (normalizedImage != null) {
-                  decodeImageFromPixels(
-                      normalizedImage.data,
-                      normalizedImage.width,
-                      normalizedImage.height,
-                      PixelFormat.rgba8888, (ui.Image img) {
-                    cbNavigation(img);
-                  });
-                }
-              });
-            }
-          }
-
-          _isScanAvailable = true;
-        });
+        processDocument(
+            [
+              availableImage.planes[0].bytes,
+              availableImage.planes[1].bytes,
+              availableImage.planes[2].bytes
+            ],
+            availableImage.width,
+            availableImage.height,
+            [
+              availableImage.planes[0].bytesPerRow,
+              availableImage.planes[1].bytesPerRow,
+              availableImage.planes[2].bytesPerRow
+            ],
+            format,
+            [
+              availableImage.planes[0].bytesPerPixel!,
+              availableImage.planes[1].bytesPerPixel!,
+              availableImage.planes[2].bytesPerPixel!
+            ]);
       }
     });
   }
@@ -503,153 +536,14 @@ class MobileCamera {
       int height = previewSize!.height.toInt();
 
       if (scanType == ScanType.id) {
-        if (isDriverLicense) {
-          mrzLines = null;
-          cbRefreshUi();
-          barcodeReader
-              .decodeImageBuffer(data, width, height, width * 4,
-                  ImagePixelFormat.IPF_ARGB_8888.index)
-              .then((results) {
-            if (!cbIsMounted()) return;
-            barcodeResults = results;
-            cbRefreshUi();
-            if (results.isNotEmpty) {
-              Map<String, String>? map = parseLicense(results[0].text);
-              if (map != null) {
-                stopVideo();
-                if (!isFinished) {
-                  isFinished = true;
-                  cbNavigation();
-                }
-              }
-            }
-
-            _isScanAvailable = true;
-          });
-        } else {
-          barcodeResults = null;
-          cbRefreshUi();
-          mrzDetector
-              .recognizeByBuffer(data, width, height, width * 4,
-                  ImagePixelFormat.IPF_ARGB_8888.index)
-              .then((results) {
-            if (results == null || !cbIsMounted()) return;
-
-            mrzLines = results;
-            cbRefreshUi();
-            if (results.isNotEmpty) {
-              MrzResult information = MrzResult();
-
-              try {
-                for (List<MrzLine> area in results) {
-                  if (area.length == 2) {
-                    information = MRZ.parseTwoLines(area[0].text, area[1].text);
-                  } else if (area.length == 3) {
-                    information = MRZ.parseThreeLines(
-                        area[0].text, area[1].text, area[2].text);
-                  }
-                }
-              } catch (e) {
-                print(e);
-              }
-
-              if (information.surname == '') {
-                information.surname = 'Not found';
-              }
-
-              if (information.givenName == '') {
-                information.givenName = 'Not found';
-              }
-
-              if (information.nationality == '') {
-                information.nationality = 'Not found';
-              }
-
-              if (information.passportNumber == '') {
-                information.passportNumber = 'Not found';
-              }
-
-              stopVideo();
-              if (!isFinished) {
-                isFinished = true;
-                ProfileData scannedData = ProfileData();
-
-                scannedData.firstName = information.givenName;
-                scannedData.lastName = information.surname;
-                scannedData.nationality = information.nationality;
-                scannedData.idNumber = information.passportNumber;
-                cbNavigation(scannedData);
-              }
-            }
-
-            _isScanAvailable = true;
-          });
-        }
+        processId(data, width, height, width * 4,
+            ImagePixelFormat.IPF_ARGB_8888.index);
       } else if (scanType == ScanType.barcode) {
-        barcodeReader
-            .decodeImageBuffer(data, width, height, width * 4,
-                ImagePixelFormat.IPF_ARGB_8888.index)
-            .then((results) {
-          if (!cbIsMounted()) return;
-          barcodeResults = results;
-
-          if (results.isNotEmpty) {
-            stopVideo();
-            if (!isFinished) {
-              isFinished = true;
-              var random = Random();
-              var element = orders[random.nextInt(orders.length)];
-              cbNavigation(element);
-            }
-          }
-
-          _isScanAvailable = true;
-        });
+        processBarcode(data, width, height, width * 4,
+            ImagePixelFormat.IPF_ARGB_8888.index);
       } else if (scanType == ScanType.document) {
-        docScanner
-            .detectBuffer(data, width, height, width * 4,
-                ImagePixelFormat.IPF_ARGB_8888.index)
-            .then((results) {
-          if (!cbIsMounted()) return;
-          results = filterResults(results, width, height);
-          if (results.isEmpty) {
-            _isScanAvailable = true;
-            return;
-          }
-
-          documentResults = results;
-
-          if (results.isNotEmpty) {
-            if (!isFinished) {
-              isFinished = true;
-
-              int imageWidth = width;
-              int imageHeight = height;
-
-              docScanner
-                  .normalizeBuffer(
-                      data,
-                      imageWidth,
-                      imageHeight,
-                      imageWidth * 4,
-                      ImagePixelFormat.IPF_ARGB_8888.index,
-                      results[0].points)
-                  .then((normalizedImage) {
-                if (normalizedImage != null) {
-                  decodeImageFromPixels(
-                      normalizedImage.data,
-                      normalizedImage.width,
-                      normalizedImage.height,
-                      PixelFormat.rgba8888, (ui.Image img) {
-                    cbNavigation(img);
-                  });
-                }
-              });
-            }
-          }
-
-          _isScanAvailable = true;
-        });
+        processDocument([data], width, height, [width * 4],
+            ImagePixelFormat.IPF_ARGB_8888.index, []);
       }
     }
   }
