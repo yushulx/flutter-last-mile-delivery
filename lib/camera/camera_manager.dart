@@ -56,7 +56,6 @@ class MobileCamera {
   }
 
   void stopVideo() async {
-    isFinished = true;
     if (controller == null) return;
     if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
       await controller!.stopImageStream();

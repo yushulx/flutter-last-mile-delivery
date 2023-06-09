@@ -151,6 +151,7 @@ class _IdScanPageState extends State<IdScanPage> with WidgetsBindingObserver {
             onTap: () {
               setState(() {
                 _mobileCamera.isDriverLicense = true;
+                _mobileCamera.mrzLines = null;
               });
             },
             child: SizedBox(
@@ -183,6 +184,7 @@ class _IdScanPageState extends State<IdScanPage> with WidgetsBindingObserver {
             onTap: () {
               setState(() {
                 _mobileCamera.isDriverLicense = false;
+                _mobileCamera.barcodeResults = null;
               });
             },
             child: SizedBox(
