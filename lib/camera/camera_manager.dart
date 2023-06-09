@@ -513,6 +513,14 @@ class CameraManager {
       );
     }
 
+    if (kIsWeb) {
+      return Transform(
+        alignment: Alignment.center,
+        transform: Matrix4.identity()..scale(-1.0, 1.0), // Flip horizontally
+        child: CameraPreview(controller!),
+      );
+    }
+
     return CameraPreview(controller!);
   }
 
