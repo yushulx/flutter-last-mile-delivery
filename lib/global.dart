@@ -251,7 +251,7 @@ List<DocumentResult> filterResults(
   for (DocumentResult result in input) {
     if (calculateArea(result.points[0], result.points[1], result.points[2],
             result.points[3]) >
-        imageArea / 2) {
+        imageArea / 3) {
       output.add(result);
     }
   }

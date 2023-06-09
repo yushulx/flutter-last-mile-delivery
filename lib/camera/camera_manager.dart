@@ -69,139 +69,69 @@ class CameraManager {
   }
 
   Future<void> webCamera() async {
-    if (controller == null || isFinished) return;
+    if (controller == null || isFinished || cbIsMounted() == false) return;
 
-    Future.delayed(const Duration(milliseconds: 10), () async {
-      if (controller == null || isFinished || cbIsMounted() == false) return;
+    XFile file = await controller!.takePicture();
 
-      XFile file = await controller!.takePicture();
-
-      if (scanType == ScanType.id) {
-        if (isDriverLicense) {
-          var results = await barcodeReader.decodeFile(file.path);
-          if (!cbIsMounted()) return;
-          barcodeResults = results;
-          cbRefreshUi();
-          if (results.isNotEmpty) {
-            try {
-              Map<String, String>? map = parseLicense(results[0].text);
-              if (map != null) {
-                stopVideo();
-                if (!isFinished) {
-                  isFinished = true;
-                  cbNavigation();
-                }
-              }
-            } catch (e) {
-              print(e);
-            }
-          }
-        } else {
-          var results = await mrzDetector.recognizeByFile(file.path);
-          if (results == null || !cbIsMounted()) return;
-
-          mrzLines = results;
-          cbRefreshUi();
-          if (results.isNotEmpty) {
-            MrzResult information = MrzResult();
-
-            try {
-              for (List<MrzLine> area in results) {
-                if (area.length == 2) {
-                  information = MRZ.parseTwoLines(area[0].text, area[1].text);
-                } else if (area.length == 3) {
-                  information = MRZ.parseThreeLines(
-                      area[0].text, area[1].text, area[2].text);
-                }
-              }
-            } catch (e) {
-              print(e);
-            }
-
-            if (information.surname == '') {
-              information.surname = 'Not found';
-            }
-
-            if (information.givenName == '') {
-              information.givenName = 'Not found';
-            }
-
-            if (information.nationality == '') {
-              information.nationality = 'Not found';
-            }
-
-            if (information.passportNumber == '') {
-              information.passportNumber = 'Not found';
-            }
-
-            stopVideo();
-            if (!isFinished) {
-              isFinished = true;
-              ProfileData scannedData = ProfileData();
-
-              scannedData.firstName = information.givenName;
-              scannedData.lastName = information.surname;
-              scannedData.nationality = information.nationality;
-              scannedData.idNumber = information.passportNumber;
-              cbNavigation(scannedData);
-            }
-          }
-        }
-      } else if (scanType == ScanType.barcode) {
+    if (scanType == ScanType.id) {
+      if (isDriverLicense) {
         var results = await barcodeReader.decodeFile(file.path);
         if (!cbIsMounted()) return;
-
         barcodeResults = results;
+        // cbRefreshUi();
+        handleDriverLicense(results);
+      } else {
+        var results = await mrzDetector.recognizeByFile(file.path);
+        if (results == null || !cbIsMounted()) return;
 
-        if (results.isNotEmpty) {
-          stopVideo();
-          if (!isFinished) {
-            isFinished = true;
-            var random = Random();
-            var element = orders[random.nextInt(orders.length)];
-            cbNavigation(element);
-          }
-        }
-      } else if (scanType == ScanType.document) {
-        documentResults = await docScanner.detectFile(file.path);
-        if (!cbIsMounted()) return;
-
-        documentResults = filterResults(documentResults,
-            previewSize!.width.toInt(), previewSize!.height.toInt());
-
-        if (documentResults == null || documentResults!.isEmpty) {
-          webCamera();
-          return;
-        }
-
-        final data = await file.readAsBytes();
-        ui.Image sourceImage = await decodeImageFromList(data);
-        ByteData? byteData =
-            await sourceImage.toByteData(format: ui.ImageByteFormat.rawRgba);
-
-        Uint8List bytes = byteData!.buffer.asUint8List();
-        int width = sourceImage.width;
-        int height = sourceImage.height;
-        int stride = byteData.lengthInBytes ~/ sourceImage.height;
-        int format = ImagePixelFormat.IPF_ARGB_8888.index;
-
-        docScanner
-            .normalizeBuffer(bytes, width, height, stride, format,
-                documentResults![0].points)
-            .then((normalizedImage) {
-          if (normalizedImage != null) {
-            decodeImageFromPixels(normalizedImage.data, normalizedImage.width,
-                normalizedImage.height, PixelFormat.rgba8888, (ui.Image img) {
-              cbNavigation(img);
-            });
-          }
-        });
+        mrzLines = results;
+        // cbRefreshUi();
+        handleMrz(results);
       }
+    } else if (scanType == ScanType.barcode) {
+      var results = await barcodeReader.decodeFile(file.path);
+      if (!cbIsMounted()) return;
 
-      if (!isFinished) {
+      barcodeResults = results;
+
+      handleBarcode(results);
+    } else if (scanType == ScanType.document) {
+      var results = await docScanner.detectFile(file.path);
+      if (!cbIsMounted()) return;
+
+      results = filterResults(
+          results, previewSize!.width.toInt(), previewSize!.height.toInt());
+
+      if (results.isEmpty) {
         webCamera();
+        return;
       }
-    });
+
+      documentResults = results;
+
+      if (results.isNotEmpty) {
+        if (!isFinished) {
+          isFinished = true;
+
+          final data = await file.readAsBytes();
+          ui.Image sourceImage = await decodeImageFromList(data);
+          ByteData? byteData =
+              await sourceImage.toByteData(format: ui.ImageByteFormat.rawRgba);
+
+          Uint8List bytes = byteData!.buffer.asUint8List();
+          int width = sourceImage.width;
+          int height = sourceImage.height;
+          int stride = byteData.lengthInBytes ~/ sourceImage.height;
+          int format = ImagePixelFormat.IPF_ARGB_8888.index;
+          handleDocument(
+              bytes, width, height, stride, format, documentResults![0].points);
+        }
+      }
+    }
+
+    if (!isFinished) {
+      webCamera();
+    }
   }
 
   void processDocument(List<Uint8List> bytes, int width, int height,
@@ -272,17 +202,8 @@ class CameraManager {
             }
           }
 
-          docScanner
-              .normalizeBuffer(data, imageWidth, imageHeight, imageWidth * 4,
-                  ImagePixelFormat.IPF_ARGB_8888.index, results[0].points)
-              .then((normalizedImage) {
-            if (normalizedImage != null) {
-              decodeImageFromPixels(normalizedImage.data, normalizedImage.width,
-                  normalizedImage.height, PixelFormat.rgba8888, (ui.Image img) {
-                cbNavigation(img);
-              });
-            }
-          });
+          handleDocument(data, imageWidth, imageHeight, imageWidth * 4,
+              ImagePixelFormat.IPF_ARGB_8888.index, results[0].points);
         }
       }
 
@@ -303,18 +224,119 @@ class CameraManager {
         }
       }
       barcodeResults = results;
-
-      if (results.isNotEmpty) {
-        stopVideo();
-        if (!isFinished) {
-          isFinished = true;
-          var random = Random();
-          var element = orders[random.nextInt(orders.length)];
-          cbNavigation(element);
-        }
-      }
+      handleBarcode(results);
 
       _isScanAvailable = true;
+    });
+  }
+
+  void handleDriverLicense(List<BarcodeResult> results) {
+    if (results.isNotEmpty) {
+      Map<String, String>? map = parseLicense(results[0].text);
+      stopVideo();
+      ProfileData scannedData = ProfileData();
+      if (map['DAC'] == null || map['DAC'] == '') {
+        scannedData.firstName = 'Not found';
+      } else {
+        scannedData.firstName = map['DAC'];
+      }
+
+      if (map['DCS'] == null || map['DCS'] == '') {
+        scannedData.lastName = 'Not found';
+      } else {
+        scannedData.lastName = map['DCS'];
+      }
+
+      if (map['DCG'] == null || map['DCG'] == '') {
+        scannedData.nationality = 'Not found';
+      } else {
+        scannedData.nationality = map['DCG'];
+      }
+
+      if (map['DAQ'] == null || map['DAQ'] == '') {
+        scannedData.idNumber = 'Not found';
+      } else {
+        scannedData.idNumber = map['DAQ'];
+      }
+
+      if (!isFinished) {
+        isFinished = true;
+
+        cbNavigation(scannedData);
+      }
+    }
+  }
+
+  void handleMrz(List<List<MrzLine>> results) {
+    if (results.isNotEmpty) {
+      MrzResult information = MrzResult();
+
+      try {
+        for (List<MrzLine> area in results) {
+          if (area.length == 2) {
+            information = MRZ.parseTwoLines(area[0].text, area[1].text);
+          } else if (area.length == 3) {
+            information =
+                MRZ.parseThreeLines(area[0].text, area[1].text, area[2].text);
+          }
+        }
+      } catch (e) {
+        print(e);
+      }
+
+      if (information.surname == '') {
+        information.surname = 'Not found';
+      }
+
+      if (information.givenName == '') {
+        information.givenName = 'Not found';
+      }
+
+      if (information.nationality == '') {
+        information.nationality = 'Not found';
+      }
+
+      if (information.passportNumber == '') {
+        information.passportNumber = 'Not found';
+      }
+
+      stopVideo();
+      if (!isFinished) {
+        isFinished = true;
+        ProfileData scannedData = ProfileData();
+
+        scannedData.firstName = information.givenName;
+        scannedData.lastName = information.surname;
+        scannedData.nationality = information.nationality;
+        scannedData.idNumber = information.passportNumber;
+        cbNavigation(scannedData);
+      }
+    }
+  }
+
+  void handleBarcode(List<BarcodeResult> results) {
+    if (results.isNotEmpty) {
+      stopVideo();
+      if (!isFinished) {
+        isFinished = true;
+        var random = Random();
+        var element = orders[random.nextInt(orders.length)];
+        cbNavigation(element);
+      }
+    }
+  }
+
+  void handleDocument(Uint8List bytes, int width, int height, int stride,
+      int format, dynamic points) {
+    docScanner
+        .normalizeBuffer(bytes, width, height, stride, format, points)
+        .then((normalizedImage) {
+      if (normalizedImage != null) {
+        decodeImageFromPixels(normalizedImage.data, normalizedImage.width,
+            normalizedImage.height, PixelFormat.rgba8888, (ui.Image img) {
+          cbNavigation(img);
+        });
+      }
     });
   }
 
@@ -333,40 +355,7 @@ class CameraManager {
         }
         barcodeResults = results;
         // cbRefreshUi();
-        if (results.isNotEmpty) {
-          Map<String, String>? map = parseLicense(results[0].text);
-          stopVideo();
-          ProfileData scannedData = ProfileData();
-          if (map['DAC'] == null || map['DAC'] == '') {
-            scannedData.firstName = 'Not found';
-          } else {
-            scannedData.firstName = map['DAC'];
-          }
-
-          if (map['DCS'] == null || map['DCS'] == '') {
-            scannedData.lastName = 'Not found';
-          } else {
-            scannedData.lastName = map['DCS'];
-          }
-
-          if (map['DCG'] == null || map['DCG'] == '') {
-            scannedData.nationality = 'Not found';
-          } else {
-            scannedData.nationality = map['DCG'];
-          }
-
-          if (map['DAQ'] == null || map['DAQ'] == '') {
-            scannedData.idNumber = 'Not found';
-          } else {
-            scannedData.idNumber = map['DAQ'];
-          }
-
-          if (!isFinished) {
-            isFinished = true;
-
-            cbNavigation(scannedData);
-          }
-        }
+        handleDriverLicense(results);
 
         _isScanAvailable = true;
       });
@@ -386,51 +375,8 @@ class CameraManager {
         }
 
         mrzLines = results;
-        cbRefreshUi();
-        if (results.isNotEmpty) {
-          MrzResult information = MrzResult();
-
-          try {
-            for (List<MrzLine> area in results) {
-              if (area.length == 2) {
-                information = MRZ.parseTwoLines(area[0].text, area[1].text);
-              } else if (area.length == 3) {
-                information = MRZ.parseThreeLines(
-                    area[0].text, area[1].text, area[2].text);
-              }
-            }
-          } catch (e) {
-            print(e);
-          }
-
-          if (information.surname == '') {
-            information.surname = 'Not found';
-          }
-
-          if (information.givenName == '') {
-            information.givenName = 'Not found';
-          }
-
-          if (information.nationality == '') {
-            information.nationality = 'Not found';
-          }
-
-          if (information.passportNumber == '') {
-            information.passportNumber = 'Not found';
-          }
-
-          stopVideo();
-          if (!isFinished) {
-            isFinished = true;
-            ProfileData scannedData = ProfileData();
-
-            scannedData.firstName = information.givenName;
-            scannedData.lastName = information.surname;
-            scannedData.nationality = information.nationality;
-            scannedData.idNumber = information.passportNumber;
-            cbNavigation(scannedData);
-          }
-        }
+        // cbRefreshUi();
+        handleMrz(results);
 
         _isScanAvailable = true;
       });
@@ -441,7 +387,7 @@ class CameraManager {
     await controller!.startImageStream((CameraImage availableImage) async {
       assert(defaultTargetPlatform == TargetPlatform.android ||
           defaultTargetPlatform == TargetPlatform.iOS);
-      if (cbIsMounted() == false) return;
+      if (cbIsMounted() == false || isFinished) return;
       int format = ImagePixelFormat.IPF_NV21.index;
 
       switch (availableImage.format.group) {
@@ -522,7 +468,7 @@ class CameraManager {
   }
 
   void _onFrameAvailable(FrameAvailabledEvent event) {
-    if (cbIsMounted() == false) return;
+    if (cbIsMounted() == false || isFinished) return;
 
     Map<String, dynamic> map = event.toJson();
     final Uint8List? data = map['bytes'] as Uint8List?;
@@ -561,7 +507,7 @@ class CameraManager {
   }
 
   Widget getPreview() {
-    if (controller == null) {
+    if (controller == null || !controller!.value.isInitialized || isFinished) {
       return Container(
         child: const Text('No camera available!'),
       );
