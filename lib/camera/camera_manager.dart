@@ -329,8 +329,12 @@ class CameraManager {
         .normalizeBuffer(bytes, width, height, stride, format, points)
         .then((normalizedImage) {
       if (normalizedImage != null) {
+        PixelFormat pixelFormat = PixelFormat.rgba8888;
+        if (Platform.isIOS) {
+          pixelFormat = PixelFormat.bgra8888;
+        }
         decodeImageFromPixels(normalizedImage.data, normalizedImage.width,
-            normalizedImage.height, PixelFormat.rgba8888, (ui.Image img) {
+            normalizedImage.height, pixelFormat, (ui.Image img) {
           cbNavigation(img);
         });
       }
