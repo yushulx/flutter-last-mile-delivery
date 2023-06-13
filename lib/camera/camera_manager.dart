@@ -39,6 +39,7 @@ class CameraManager {
   ScanType scanType = ScanType.id;
   bool isFinished = false;
   StreamSubscription<FrameAvailabledEvent>? _frameAvailableStreamSubscription;
+  bool _isMobileWeb = false;
 
   CameraManager(
       {required this.context,
@@ -509,9 +510,26 @@ class CameraManager {
     try {
       WidgetsFlutterBinding.ensureInitialized();
       _cameras = await availableCameras();
+      int index = 0;
+
+      for (; index < _cameras.length; index++) {
+        CameraDescription description = _cameras[index];
+        if (description.name.toLowerCase().contains('back')) {
+          _isMobileWeb = true;
+          break;
+        }
+      }
       if (_cameras.isEmpty) return;
 
-      toggleCamera(0);
+      if (!kIsWeb) {
+        toggleCamera(0);
+      } else {
+        if (_isMobileWeb) {
+          toggleCamera(index);
+        } else {
+          toggleCamera(0);
+        }
+      }
     } on CameraException catch (e) {
       print(e);
     }
@@ -524,7 +542,7 @@ class CameraManager {
       );
     }
 
-    if (kIsWeb) {
+    if (kIsWeb && !_isMobileWeb) {
       return Transform(
         alignment: Alignment.center,
         transform: Matrix4.identity()..scale(-1.0, 1.0), // Flip horizontally
