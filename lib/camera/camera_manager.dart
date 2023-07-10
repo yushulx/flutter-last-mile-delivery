@@ -40,6 +40,8 @@ class CameraManager {
   bool isFinished = false;
   StreamSubscription<FrameAvailabledEvent>? _frameAvailableStreamSubscription;
   bool _isMobileWeb = false;
+  DocumentResult? _base;
+  int _baseIndex = 0;
 
   CameraManager(
       {required this.context,
@@ -100,17 +102,37 @@ class CameraManager {
       var results = await docScanner.detectFile(file.path);
       if (!cbIsMounted()) return;
 
-      results = filterResults(
-          results, previewSize!.width.toInt(), previewSize!.height.toInt());
+      // results = filterResults(
+      //     results, previewSize!.width.toInt(), previewSize!.height.toInt());
 
-      if (results.isEmpty) {
+      if (results == null || results.isEmpty) {
         webCamera();
         return;
       }
 
       documentResults = results;
+      cbRefreshUi();
+      if (_base == null) {
+        _baseIndex += 1;
+        _base = results[0];
+      } else {
+        double previousArea = calculateArea(_base!.points[0], _base!.points[1],
+            _base!.points[2], _base!.points[3]);
+        double currentArea = calculateArea(results[0].points[0],
+            results[0].points[1], results[0].points[2], results[0].points[3]);
+        double diff = previousArea - currentArea > 0
+            ? previousArea - currentArea
+            : currentArea - previousArea;
+        if (diff / previousArea < 0.2) {
+          _baseIndex += 1;
+        } else {
+          _baseIndex = 1;
+        }
 
-      if (results.isNotEmpty) {
+        _base = results[0];
+      }
+
+      if (_baseIndex == 10 && results.isNotEmpty) {
         if (!isFinished) {
           isFinished = true;
 
@@ -141,8 +163,10 @@ class CameraManager {
         .detectBuffer(bytes[0], width, height, strides[0], format)
         .then((results) {
       if (!cbIsMounted()) return;
-      results = filterResults(results, width, height);
-      if (results.isEmpty) {
+      // results = filterResults(results, width, height);
+      if (results == null || results.isEmpty) {
+        documentResults = results;
+        cbRefreshUi();
         _isScanAvailable = true;
         return;
       }
@@ -154,8 +178,28 @@ class CameraManager {
       }
 
       documentResults = results;
+      cbRefreshUi();
+      if (_base == null) {
+        _baseIndex += 1;
+        _base = results[0];
+      } else {
+        double previousArea = calculateArea(_base!.points[0], _base!.points[1],
+            _base!.points[2], _base!.points[3]);
+        double currentArea = calculateArea(results[0].points[0],
+            results[0].points[1], results[0].points[2], results[0].points[3]);
+        double diff = previousArea - currentArea > 0
+            ? previousArea - currentArea
+            : currentArea - previousArea;
+        if (diff / previousArea < 0.2) {
+          _baseIndex += 1;
+        } else {
+          _baseIndex = 1;
+        }
 
-      if (results.isNotEmpty) {
+        _base = results[0];
+      }
+
+      if (_baseIndex == 10 && results.isNotEmpty) {
         if (!isFinished) {
           isFinished = true;
 

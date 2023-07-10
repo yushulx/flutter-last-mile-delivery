@@ -89,9 +89,16 @@ class _DeliveryPageState extends State<DeliveryPage> {
     } else {
       return <Widget>[
         const SizedBox(
-          height: 116,
+          height: 16,
         ),
-        createCustomImage(context, normalizedUiImage!),
+        Expanded(
+            child: SingleChildScrollView(
+          child: createCustomImage(context, normalizedUiImage!),
+        ))
+        // SizedBox(
+        //   height: 116,
+        //   child: createCustomImage(context, normalizedUiImage!),
+        // ),
       ];
     }
   }

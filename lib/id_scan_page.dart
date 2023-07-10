@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'camera/camera_manager.dart';
 import 'confirm_page.dart';
@@ -227,17 +230,19 @@ class _IdScanPageState extends State<IdScanPage> with WidgetsBindingObserver {
 
   List<Widget> createCameraPreview() {
     if (_mobileCamera.controller != null && _mobileCamera.previewSize != null) {
+      double width = _mobileCamera.previewSize!.width;
+      double height = _mobileCamera.previewSize!.height;
+      if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
+        if (MediaQuery.of(context).size.width <
+            MediaQuery.of(context).size.height) {
+          width = _mobileCamera.previewSize!.height;
+          height = _mobileCamera.previewSize!.width;
+        }
+      }
+
       return [
         SizedBox(
-            width: MediaQuery.of(context).size.width <
-                    MediaQuery.of(context).size.height
-                ? _mobileCamera.previewSize!.height
-                : _mobileCamera.previewSize!.width,
-            height: MediaQuery.of(context).size.width <
-                    MediaQuery.of(context).size.height
-                ? _mobileCamera.previewSize!.width
-                : _mobileCamera.previewSize!.height,
-            child: _mobileCamera.getPreview()),
+            width: width, height: height, child: _mobileCamera.getPreview()),
         Positioned(
           top: 0.0,
           right: 0.0,
