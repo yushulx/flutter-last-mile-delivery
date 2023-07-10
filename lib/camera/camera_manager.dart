@@ -234,35 +234,36 @@ class CameraManager {
   void handleDriverLicense(List<BarcodeResult> results) {
     if (results.isNotEmpty) {
       Map<String, String>? map = parseLicense(results[0].text);
-      ProfileData scannedData = ProfileData();
-      if (map['DAC'] == null || map['DAC'] == '') {
-        scannedData.firstName = 'Not found';
-      } else {
-        scannedData.firstName = map['DAC'];
-      }
+      if (map.isNotEmpty) {
+        ProfileData scannedData = ProfileData();
+        if (map['DAC'] == null || map['DAC'] == '') {
+          scannedData.firstName = 'Not found';
+        } else {
+          scannedData.firstName = map['DAC'];
+        }
 
-      if (map['DCS'] == null || map['DCS'] == '') {
-        scannedData.lastName = 'Not found';
-      } else {
-        scannedData.lastName = map['DCS'];
-      }
+        if (map['DCS'] == null || map['DCS'] == '') {
+          scannedData.lastName = 'Not found';
+        } else {
+          scannedData.lastName = map['DCS'];
+        }
 
-      if (map['DCG'] == null || map['DCG'] == '') {
-        scannedData.nationality = 'Not found';
-      } else {
-        scannedData.nationality = map['DCG'];
-      }
+        if (map['DCG'] == null || map['DCG'] == '') {
+          scannedData.nationality = 'Not found';
+        } else {
+          scannedData.nationality = map['DCG'];
+        }
 
-      if (map['DAQ'] == null || map['DAQ'] == '') {
-        scannedData.idNumber = 'Not found';
-      } else {
-        scannedData.idNumber = map['DAQ'];
-      }
+        if (map['DAQ'] == null || map['DAQ'] == '') {
+          scannedData.idNumber = 'Not found';
+        } else {
+          scannedData.idNumber = map['DAQ'];
+        }
+        if (!isFinished) {
+          isFinished = true;
 
-      if (!isFinished) {
-        isFinished = true;
-
-        cbNavigation(scannedData);
+          cbNavigation(scannedData);
+        }
       }
     }
   }
@@ -331,7 +332,7 @@ class CameraManager {
         .then((normalizedImage) {
       if (normalizedImage != null) {
         PixelFormat pixelFormat = PixelFormat.rgba8888;
-        if (Platform.isIOS) {
+        if (!kIsWeb && Platform.isIOS) {
           pixelFormat = PixelFormat.bgra8888;
         }
         decodeImageFromPixels(normalizedImage.data, normalizedImage.width,
@@ -556,7 +557,7 @@ class CameraManager {
   Future<void> toggleCamera(int index) async {
     if (controller != null) controller!.dispose();
 
-    controller = CameraController(_cameras[index], ResolutionPreset.medium);
+    controller = CameraController(_cameras[index], ResolutionPreset.high);
     controller!.initialize().then((_) {
       if (!cbIsMounted()) {
         return;
